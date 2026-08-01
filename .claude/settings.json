@@ -1,0 +1,22 @@
+{
+  "files.exclude": {
+    "**/*.env": true,
+    "**/*.env.local": true,
+    "**/*.env.development.local": true,
+    "**/*.env.test.local": true,
+    "**/*.env.production.local": true,
+    "**/*.env.development": true,
+    "**/*.env.test": true,
+    "**/*.env.production": true
+  },
+  "search.exclude": {
+    "**/*.env": true,
+    "**/*.env.local": true,
+    "**/*.env.development.local": true,
+    "**/*.env.test.local": true,
+    "**/*.env.production.local": true,
+    "**/*.env.development": true,
+    "**/*.env.test": true,
+    "**/*.env.production": true
+  }
+}
