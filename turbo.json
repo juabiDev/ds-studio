@@ -1,0 +1,58 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": [
+    ".env"
+  ],
+  "globalEnv": [
+    "DATABASE_URL",
+    "NEXT_PUBLIC_SITE_URL",
+    "IP_HASH_SALT",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    "TURNSTILE_SECRET_KEY",
+    "RESEND_API_KEY",
+    "BOOKING_NOTIFY_EMAIL",
+    "BOOKING_EMAIL_FROM",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "WHATSAPP_PHONE_NUMBER_ID",
+    "WHATSAPP_ACCESS_TOKEN",
+    "WHATSAPP_APP_SECRET",
+    "WHATSAPP_WEBHOOK_VERIFY_TOKEN",
+    "WHATSAPP_GRAPH_VERSION",
+    "WHATSAPP_TEMPLATE_LANGUAGE",
+    "WHATSAPP_API_BASE_URL"
+  ],
+  "tasks": {
+    "generate": {
+      "inputs": [
+        "prisma/schema.prisma"
+      ],
+      "outputs": [
+        "src/generated/**"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^generate",
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^generate"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^generate"
+      ]
+    },
+    "lint": {}
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@ds-studio/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ds-studio/auth": "*",
+    "@ds-studio/database": "*",
+    "@ds-studio/messaging": "*",
+    "@ds-studio/ui": "*",
+    "better-auth": "^1.7.6",
+    "lucide-react": "^0.487.0",
+    "next": "15.5.22",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@next/env": "15.5.22",
+    "@tailwindcss/postcss": "4.1.12",
+    "@types/node": "22.10.5",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "eslint": "9.18.0",
+    "eslint-config-next": "15.5.22",
+    "tailwindcss": "4.1.12",
+    "typescript": "5.7.3"
+  }
+}

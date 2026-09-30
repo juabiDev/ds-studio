@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  ONLINE
+  ADMIN
+}
+
+enum CancelledBy {
+  CUSTOMER
+  STAFF
+}
+
+enum MessageChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum MessageDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  RECEIVED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  /// Duration in minutes
+  duration     Int?
+  price        Decimal?      @db.Decimal(10, 2)
+  appointments Appointment[]
+  deletedAt    DateTime?     @map("deleted_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("services")
+}
+
+/// A stored image (uploaded manually to Cloudflare R2). Independent of where it's used:
+/// link it to barbers through EmployeeImage and to the public gallery through GalleryImage.
+model Thumbnail {
+  id             String          @id @default(cuid())
+  imageUrl       String          @map("image_url")
+  /// Map of variant name -> URL, e.g. { "sm": "...", "md": "...", "lg": "..." }
+  variants       Json            @default("{}")
+  /// Key into `variants` used when no size is requested
+  defaultVariant String?         @map("default_variant")
+  /// Describes the photo for screen readers and search engines
+  alt            String?
+  employees      EmployeeImage[]
+  gallery        GalleryImage[]
+  deletedAt      DateTime?       @map("deleted_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@map("thumbnails")
+}
+
+/// Photos of a barber. The lowest `sortOrder` is the profile picture on the public site.
+model EmployeeImage {
+  employeeId  String    @map("employee_id")
+  thumbnailId String    @map("thumbnail_id")
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  thumbnail   Thumbnail @relation(fields: [thumbnailId], references: [id], onDelete: Cascade)
+  sortOrder   Int       @default(0) @map("sort_order")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@id([employeeId, thumbnailId])
+  @@index([thumbnailId])
+  @@map("employee_images")
+}
+
+/// A photo in the public gallery. `category` is the filter label shown on the site
+/// (e.g. "Cortes"); filters appear in the order their first photo does.
+model GalleryImage {
+  id          String    @id @default(cuid())
+  thumbnailId String    @map("thumbnail_id")
+  thumbnail   Thumbnail @relation(fields: [thumbnailId], references: [id], onDelete: Cascade)
+  category    String
+  sortOrder   Int       @default(0) @map("sort_order")
+  deletedAt   DateTime? @map("deleted_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([thumbnailId])
+  @@index([sortOrder])
+  @@map("gallery_images")
+}
+
+model Availability {
+  id        String                 @id @default(cuid())
+  /// 24h "HH:mm"
+  time      String                 @db.VarChar(5)
+  day       DayOfWeek
+  /// Specific calendar date; null means the slot recurs every `day`
+  date      DateTime?              @db.Date
+  /// Shop-wide switch: false closes the slot for every barber
+  available Boolean                @default(true)
+  employees EmployeeAvailability[]
+  deletedAt DateTime?              @map("deleted_at")
+  updatedAt DateTime               @updatedAt @map("updated_at")
+  createdAt DateTime               @default(now()) @map("created_at")
+
+  @@index([day, time])
+  @@index([date])
+  @@map("availabilities")
+}
+
+model Employee {
+  id             String                 @id @default(cuid())
+  name           String
+  role           String                 @default("Barbero")
+  experience     String?
+  specialty      String?
+  images         EmployeeImage[]
+  availabilities EmployeeAvailability[]
+  appointments   Appointment[]
+  closures       Closure[]
+  deletedAt      DateTime?              @map("deleted_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+
+  @@map("employees")
+}
+
+/// Assigns a barber to a time slot. `available = false` blocks the slot for that barber
+/// while keeping the assignment visible in the admin dashboard.
+model EmployeeAvailability {
+  employeeId     String       @map("employee_id")
+  availabilityId String       @map("availability_id")
+  employee       Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  availability   Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  available      Boolean      @default(true)
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@id([employeeId, availabilityId])
+  @@index([availabilityId, available])
+  @@map("employee_availabilities")
+}
+
+/// Staff account managed by Better Auth (packages/auth). Public sign-up is disabled: admins are
+/// created with `npm run auth:create-admin`. Customers book as guests and have no account.
+model User {
+  id            String        @id
+  name          String
+  email         String        @unique
+  emailVerified Boolean       @default(false) @map("email_verified")
+  image         String?
+  phone         String?
+  role          UserRole      @default(CUSTOMER)
+  sessions      Session[]
+  accounts      Account[]
+  appointments  Appointment[]
+  deletedAt     DateTime?     @map("deleted_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+/// Better Auth session (database-backed; revoked by deleting the row).
+model Session {
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Better Auth login method. Email + password lives here with providerId "credential" and the
+/// scrypt hash in `password`.
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+/// Better Auth one-time tokens (password reset, email verification).
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+/// Business details shown on the public site, edited from the admin "Ajustes" page.
+/// Always a single row with id = 1.
+model SiteSettings {
+  id           Int      @id @default(1)
+  /// As displayed, e.g. "+598 99 123 456"
+  phone        String
+  /// WhatsApp number when it differs from `phone`
+  whatsapp     String?
+  email        String
+  street       String
+  city         String
+  latitude     Float
+  longitude    Float
+  instagramUrl String?  @map("instagram_url")
+  facebookUrl  String?  @map("facebook_url")
+  /// { "MONDAY": { "opens": "09:00", "closes": "20:00" }, ..., "SUNDAY": null }; null = closed
+  openingHours Json     @map("opening_hours")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("site_settings")
+}
+
+/// A booked slot. `date` + `time` use the same local-time convention as Availability
+/// (America/Montevideo), so no timezone math is needed to match them.
+model Appointment {
+  id                  String            @id @default(cuid())
+  serviceId           String            @map("service_id")
+  service             Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  employeeId          String            @map("employee_id")
+  employee            Employee          @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  /// Set when a signed-in customer books; guests only leave name + phone
+  userId              String?           @map("user_id")
+  user                User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  date                DateTime          @db.Date
+  /// 24h "HH:mm" start time
+  time                String            @db.VarChar(5)
+  /// Snapshot of the service duration at booking time, used for overlap checks
+  durationMinutes     Int               @map("duration_minutes")
+  customerName        String            @map("customer_name")
+  /// Normalized to E.164 (e.g. +59899123456). Optional for walk-ins added by staff.
+  customerPhone       String?           @map("customer_phone")
+  source              AppointmentSource @default(ONLINE)
+  /// SHA-256 of the booker's IP (never the raw IP), used only for rate limiting online bookings
+  clientIpHash        String?           @map("client_ip_hash")
+  status              AppointmentStatus @default(CONFIRMED)
+  /// Set when the customer taps "Confirmo asistencia" on WhatsApp
+  customerConfirmedAt DateTime?         @map("customer_confirmed_at")
+  cancelledAt         DateTime?         @map("cancelled_at")
+  cancelledBy         CancelledBy?      @map("cancelled_by")
+  /// SHA-256 of the random token carried by the WhatsApp buttons (the raw token is never stored)
+  actionTokenHash     String?           @unique @map("action_token_hash")
+  messages            MessageLog[]
+  deletedAt           DateTime?         @map("deleted_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  createdAt           DateTime          @default(now()) @map("created_at")
+
+  @@index([employeeId, date])
+  @@index([date])
+  @@index([customerPhone, date])
+  @@index([clientIpHash, createdAt])
+  @@map("appointments")
+}
+
+/// Days nobody can book: a holiday for the whole shop (employeeId null) or one barber's time off.
+/// Both dates are inclusive; a single day has startDate == endDate.
+model Closure {
+  id         String    @id @default(cuid())
+  employeeId String?   @map("employee_id")
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate  DateTime  @map("start_date") @db.Date
+  endDate    DateTime  @map("end_date") @db.Date
+  reason     String?
+  deletedAt  DateTime? @map("deleted_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([startDate, endDate])
+  @@index([employeeId])
+  @@map("closures")
+}
+
+/// Every WhatsApp/email message sent or received. Outbound rows track delivery status from
+/// Meta's webhooks; inbound rows use the provider id as a unique key so a webhook delivered
+/// twice is processed once.
+model MessageLog {
+  id                String           @id @default(cuid())
+  appointmentId     String?          @map("appointment_id")
+  appointment       Appointment?     @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  channel           MessageChannel
+  direction         MessageDirection
+  /// e.g. booking_confirmation, staff_cancellation, button_reply, auto_reply
+  kind              String
+  providerMessageId String?          @unique @map("provider_message_id")
+  status            MessageStatus    @default(PENDING)
+  error             String?
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@index([appointmentId, kind])
+  @@map("message_logs")
+}

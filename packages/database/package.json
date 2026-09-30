@@ -1,0 +1,39 @@
+{
+  "name": "@ds-studio/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dates": "./src/dates.ts",
+    "./booking": "./src/booking.ts",
+    "./client": "./src/generated/prisma/client.ts",
+    "./settings": "./src/settings.ts",
+    "./settings-store": "./src/settings-store.ts"
+  },
+  "scripts": {
+    "postinstall": "prisma generate",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "deploy": "prisma migrate deploy",
+    "studio": "prisma studio",
+    "typecheck": "tsc --noEmit",
+    "seed": "prisma db seed",
+    "stress-test": "tsx scripts/booking-stress-test.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "pg": "^8.23.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^18.0.3",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.7.3"
+  }
+}

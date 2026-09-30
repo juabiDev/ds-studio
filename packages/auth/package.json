@@ -1,0 +1,33 @@
+{
+  "name": "@ds-studio/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/session.ts",
+    "./server": "./src/auth.ts",
+    "./middleware": "./src/middleware.ts",
+    "./login-rate-limit": "./src/login-rate-limit.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "create-admin": "tsx scripts/create-admin.ts"
+  },
+  "dependencies": {
+    "@ds-studio/database": "*",
+    "better-auth": "^1.7.6",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@types/node": "22.10.5",
+    "@types/react": "18.3.18",
+    "dotenv": "^18.0.3",
+    "next": "15.5.22",
+    "tsx": "^4.23.15",
+    "typescript": "5.7.3"
+  },
+  "peerDependencies": {
+    "next": "^15.5.0"
+  }
+}

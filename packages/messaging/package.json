@@ -1,0 +1,21 @@
+{
+  "name": "@ds-studio/messaging",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/notifications.ts",
+    "./webhook": "./src/webhook.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ds-studio/database": "*",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "typescript": "5.7.3"
+  }
+}
