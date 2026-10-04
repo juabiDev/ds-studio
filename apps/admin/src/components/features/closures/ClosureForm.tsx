@@ -4,12 +4,13 @@ import { useState, type FormEvent } from "react";
 
 import { createClosure } from "@/app/actions/closures";
 
+import { fieldClass, labelClass, submitClass } from "@/lib/form-styles";
+import type { NamedOption } from "@/types/admin";
+
 const SHOP = "local";
-const field = "h-12 w-full rounded-md border border-border bg-input px-3 text-base";
-const label = "mb-1.5 block text-sm text-muted-foreground";
 
 interface ClosureFormProps {
-  barbers: { id: string; name: string }[];
+  barbers: NamedOption[];
   minDate: string;
 }
 
@@ -36,8 +37,8 @@ export const ClosureForm = ({ barbers, minDate }: ClosureFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
       <div>
-        <label htmlFor="who" className={label}>¿Quién no atiende?</label>
-        <select id="who" value={who} onChange={(e) => setWho(e.target.value)} className={field}>
+        <label htmlFor="who" className={labelClass}>¿Quién no atiende?</label>
+        <select id="who" value={who} onChange={(e) => setWho(e.target.value)} className={fieldClass}>
           <option value={SHOP}>Todo el local (feriado)</option>
           {barbers.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
@@ -46,7 +47,7 @@ export const ClosureForm = ({ barbers, minDate }: ClosureFormProps) => {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="start" className={label}>Desde</label>
+          <label htmlFor="start" className={labelClass}>Desde</label>
           <input
             id="start"
             type="date"
@@ -57,22 +58,22 @@ export const ClosureForm = ({ barbers, minDate }: ClosureFormProps) => {
               if (e.target.value > endDate) setEndDate(e.target.value);
             }}
             required
-            className={field}
+            className={fieldClass}
           />
         </div>
         <div>
-          <label htmlFor="end" className={label}>Hasta (inclusive)</label>
-          <input id="end" type="date" min={startDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} required className={field} />
+          <label htmlFor="end" className={labelClass}>Hasta (inclusive)</label>
+          <input id="end" type="date" min={startDate} value={endDate} onChange={(e) => setEndDate(e.target.value)} required className={fieldClass} />
         </div>
       </div>
       <div>
-        <label htmlFor="reason" className={label}>Motivo (opcional)</label>
-        <input id="reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Feriado, vacaciones…" className={field} />
+        <label htmlFor="reason" className={labelClass}>Motivo (opcional)</label>
+        <input id="reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Feriado, vacaciones…" className={fieldClass} />
       </div>
 
       {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
 
-      <button type="submit" disabled={saving} className="h-12 rounded-md bg-primary text-base font-medium text-primary-foreground disabled:opacity-40">
+      <button type="submit" disabled={saving} className={submitClass}>
         {saving ? "Guardando…" : "Agregar cierre"}
       </button>
     </form>

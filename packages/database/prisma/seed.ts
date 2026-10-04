@@ -6,37 +6,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { minutesToTime } from "../src/dates";
 import { DEFAULT_SITE_SETTINGS } from "../src/settings";
 import { PrismaClient, type DayOfWeek } from "../src/generated/prisma/client";
+import { EMPLOYEES, GALLERY, SERVICES } from "./seed-data";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
-
-const SERVICES = [
-  { id: "svc_clasico", name: "Corte Clásico", duration: 45, price: 350 },
-  { id: "svc_fade", name: "Fade / Degradé", duration: 50, price: 420 },
-  { id: "svc_barba", name: "Barba Completa", duration: 30, price: 280 },
-  { id: "svc_combo", name: "Corte + Barba", duration: 70, price: 650 },
-  { id: "svc_cejas", name: "Diseño de Cejas", duration: 20, price: 180 },
-  { id: "svc_tratamiento", name: "Tratamiento Capilar", duration: 40, price: 380 },
-];
-
-// TODO: replace the Unsplash stock photos with real photos of the team
-const EMPLOYEES = [
-  { id: "emp_diego", name: "Diego S.", role: "Fundador · Director", specialty: "Fade & Diseño", experience: "8 años", photo: "photo-1619950455147-9c450d8f988a" },
-  { id: "emp_sebastian", name: "Sebastián M.", role: "Barbero Senior", specialty: "Clásico & Barba", experience: "6 años", photo: "photo-1619950466709-02c2bf682442" },
-  { id: "emp_rodrigo", name: "Rodrigo T.", role: "Barbero", specialty: "Degradé & Textura", experience: "4 años", photo: "photo-1619950463968-f2bfb9341d00" },
-  { id: "emp_nicolas", name: "Nicolás F.", role: "Barbero", specialty: "Corte Moderno", experience: "3 años", photo: "photo-1578176603894-57973e38890f" },
-];
-
-// Served from apps/web/public until they're moved to Cloudflare R2; then update image_url in the database
-const GALLERY = [
-  { id: "corte1", category: "Cortes", alt: "Corte texturizado con taper en DS STUDIO" },
-  { id: "corte2", category: "Cortes", alt: "Mid fade con flequillo hacia adelante" },
-  { id: "corte3", category: "Cortes", alt: "Low fade con flequillo recto" },
-  { id: "hero", category: "El local", alt: "Sala de espera con el cartel de neón de DS Studio" },
-  { id: "local", category: "El local", alt: "Interior de la barbería con lámpara hexagonal" },
-  { id: "ubicacion", category: "El local", alt: "Fachada de DS STUDIO desde la calle" },
-];
 
 const unsplash = (photo: string, w: number, h: number) =>
   `https://images.unsplash.com/${photo}?w=${w}&h=${h}&fit=crop&auto=format`;
@@ -50,16 +24,16 @@ const slotsBetween = (from: string, to: string, breaks: string[] = []) => {
   return times.filter((t) => !breaks.includes(t));
 };
 
-// Mon–Sat 9:00–20:00 with a 12:30 lunch break; Sun 10:00–15:00
-const WEEKDAY_SLOTS = slotsBetween("09:00", "20:00", ["12:30"]);
+// Mon–Fri 10:00–20:00 with a 12:30 lunch break; Sat 9:00–14:00; Sun 10:00–14:00
+const WEEKDAY_SLOTS = slotsBetween("10:00", "20:00", ["12:30"]);
 const SCHEDULE: Record<DayOfWeek, string[]> = {
   MONDAY: WEEKDAY_SLOTS,
   TUESDAY: WEEKDAY_SLOTS,
   WEDNESDAY: WEEKDAY_SLOTS,
   THURSDAY: WEEKDAY_SLOTS,
   FRIDAY: WEEKDAY_SLOTS,
-  SATURDAY: WEEKDAY_SLOTS,
-  SUNDAY: slotsBetween("10:00", "15:00"),
+  SATURDAY: slotsBetween("9:00", "14:00"),
+  SUNDAY: slotsBetween("10:00", "14:00"),
 };
 
 const main = async () => {
@@ -96,18 +70,17 @@ const main = async () => {
   // Only created once: never overwrite what the owner saved from the admin
   await prisma.siteSettings.upsert({ where: { id: 1 }, create: { id: 1, ...DEFAULT_SITE_SETTINGS }, update: {} });
 
-  for (const [day, times] of Object.entries(SCHEDULE) as [DayOfWeek, string[]][]) {
-    for (const time of times) {
-      const id = `av_${day}_${time.replace(":", "")}`;
-      await prisma.availability.upsert({ where: { id }, create: { id, day, time }, update: {} });
+  // Bulk inserts instead of one round-trip per slot: ~230 queries down to 2 against a remote DB
+  const slots = (Object.entries(SCHEDULE) as [DayOfWeek, string[]][]).flatMap(([day, times]) =>
+    times.map((time) => ({ id: `av_${day}_${time.replace(":", "")}`, day, time })),
+  );
+  await prisma.availability.createMany({ data: slots, skipDuplicates: true });
 
-      // Every barber works every slot by default; admins block individual slots from the dashboard
-      await prisma.employeeAvailability.createMany({
-        data: EMPLOYEES.map((e) => ({ employeeId: e.id, availabilityId: id })),
-        skipDuplicates: true,
-      });
-    }
-  }
+  // Every barber works every slot by default; admins block individual slots from the dashboard
+  await prisma.employeeAvailability.createMany({
+    data: slots.flatMap((slot) => EMPLOYEES.map((e) => ({ employeeId: e.id, availabilityId: slot.id }))),
+    skipDuplicates: true,
+  });
 
   console.log(
     `Seeded ${SERVICES.length} services, ${EMPLOYEES.length} barbers, ${GALLERY.length} gallery photos, site settings and the weekly schedule.`,

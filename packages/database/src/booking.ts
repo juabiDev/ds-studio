@@ -12,6 +12,7 @@ import {
   weekdayOfKey,
 } from "./dates";
 import { Prisma, type AppointmentSource, type PrismaClient } from "./generated/prisma/client";
+import { normalizePhone } from "./phone";
 
 /** How far ahead customers can book online (today + 13 days = two weeks). */
 export const BOOKING_WINDOW_DAYS = 14;
@@ -30,16 +31,7 @@ export const isDateInBookingWindow = (dateKey: string) => {
   return dateKey >= today && dateKey <= addDaysToKey(today, BOOKING_WINDOW_DAYS - 1);
 };
 
-/**
- * Canonical E.164 form so "099 123 456", "99123456" and "+598 99 123 456" count as the same
- * customer. Numbers without a country code are assumed to be Uruguayan.
- */
-export const normalizePhone = (phone: string) => {
-  const digits = phone.replace(/\D/g, "");
-  if (phone.trim().startsWith("+")) return `+${digits}`;
-  if (digits.startsWith("598")) return `+${digits}`;
-  return `+598${digits.replace(/^0/, "")}`;
-};
+export { normalizePhone };
 
 export interface OpenSlot {
   time: string;
@@ -92,18 +84,46 @@ export const findOpenSlots = async (
     }),
   ]);
 
-  if (closures.some((c) => c.employeeId === null)) return [];
-  const closedEmployees = new Set(closures.map((c) => c.employeeId));
+  return computeOpenSlots({
+    assignments: assignments.map((a) => ({ employeeId: a.employeeId, time: a.availability.time })),
+    appointments,
+    closedEmployeeIds: closures.map((c) => c.employeeId),
+    durationMinutes,
+    cutoffMinutes: enforceLeadTime && dateKey === toShopDateKey() ? shopNowMinutes() + SAME_DAY_LEAD_MINUTES : -1,
+  });
+};
+
+interface ComputeOpenSlotsInput {
+  /** Open (barber, time) slots for one day */
+  assignments: { employeeId: string; time: string }[];
+  /** Non-cancelled appointments that day */
+  appointments: { employeeId: string; time: string; durationMinutes: number }[];
+  /** Barbers with a closure that day; null = the whole shop is closed */
+  closedEmployeeIds: (string | null)[];
+  durationMinutes: number;
+  /** Start times before this minute of the day are skipped (-1 = none) */
+  cutoffMinutes: number;
+}
+
+/** Pure core of findOpenSlots, shared with the per-day occupancy so both agree on what "free" means. */
+const computeOpenSlots = ({
+  assignments,
+  appointments,
+  closedEmployeeIds,
+  durationMinutes,
+  cutoffMinutes,
+}: ComputeOpenSlotsInput): OpenSlot[] => {
+  if (closedEmployeeIds.includes(null)) return [];
+  const closedEmployees = new Set(closedEmployeeIds);
 
   const openStartsByEmployee = new Map<string, Set<number>>();
   for (const a of assignments) {
     if (closedEmployees.has(a.employeeId)) continue;
     const starts = openStartsByEmployee.get(a.employeeId) ?? new Set<number>();
-    starts.add(timeToMinutes(a.availability.time));
+    starts.add(timeToMinutes(a.time));
     openStartsByEmployee.set(a.employeeId, starts);
   }
 
-  const cutoff = enforceLeadTime && dateKey === toShopDateKey() ? shopNowMinutes() + SAME_DAY_LEAD_MINUTES : -1;
   const steps = Math.ceil(durationMinutes / SLOT_MINUTES);
   const slots = new Map<number, string[]>();
 
@@ -111,7 +131,7 @@ export const findOpenSlots = async (
     const booked = appointments.filter((ap) => ap.employeeId === id);
 
     for (const start of starts) {
-      if (start < cutoff) continue;
+      if (start < cutoffMinutes) continue;
 
       const end = start + durationMinutes;
       const coversOpenSlots = Array.from({ length: steps }, (_, i) => start + i * SLOT_MINUTES).every((m) =>
@@ -129,6 +149,78 @@ export const findOpenSlots = async (
   return [...slots.entries()]
     .sort(([a], [b]) => a - b)
     .map(([start, employeeIds]) => ({ time: minutesToTime(start), employeeIds }));
+};
+
+/**
+ * free = nothing booked, partial = some bookings and room left, full = no 30-min slot left,
+ * closed = no slots at all that day (closure or no schedule) and nothing booked.
+ */
+export type DayOccupancy = "free" | "partial" | "full" | "closed";
+
+interface OccupancyOptions {
+  fromKey: string;
+  toKey: string;
+  /** null = all barbers together */
+  employeeId: string | null;
+}
+
+/** Occupancy for every day in [fromKey, toKey] with three queries, for coloring a calendar. */
+export const getOccupancyByDay = async (
+  db: Db,
+  { fromKey, toKey, employeeId }: OccupancyOptions,
+): Promise<Record<string, DayOccupancy>> => {
+  const from = dateKeyToDbDate(fromKey);
+  const to = dateKeyToDbDate(toKey);
+  const employeeFilter = employeeId ? { employeeId } : {};
+
+  const [assignments, appointments, closures] = await Promise.all([
+    db.employeeAvailability.findMany({
+      where: {
+        ...employeeFilter,
+        available: true,
+        employee: { deletedAt: null },
+        availability: {
+          available: true,
+          deletedAt: null,
+          OR: [{ date: { gte: from, lte: to } }, { date: null }],
+        },
+      },
+      select: { employeeId: true, availability: { select: { time: true, day: true, date: true } } },
+    }),
+    db.appointment.findMany({
+      where: { ...employeeFilter, date: { gte: from, lte: to }, deletedAt: null, status: { not: "CANCELLED" } },
+      select: { employeeId: true, time: true, durationMinutes: true, date: true },
+    }),
+    db.closure.findMany({
+      where: { deletedAt: null, startDate: { lte: to }, endDate: { gte: from } },
+      select: { employeeId: true, startDate: true, endDate: true },
+    }),
+  ]);
+
+  const result: Record<string, DayOccupancy> = {};
+  for (let key = fromKey; key <= toKey; key = addDaysToKey(key, 1)) {
+    const date = dateKeyToDbDate(key).getTime();
+    const weekday = weekdayOfKey(key);
+
+    // Same rule as findOpenSlots: date-specific slots plus the weekday's recurring ones
+    const dayAssignments = assignments
+      .filter((a) => (a.availability.date ? a.availability.date.getTime() === date : a.availability.day === weekday))
+      .map((a) => ({ employeeId: a.employeeId, time: a.availability.time }));
+    const dayAppointments = appointments.filter((a) => a.date.getTime() === date);
+    const closedEmployeeIds = closures
+      .filter((c) => c.startDate.getTime() <= date && c.endDate.getTime() >= date)
+      .map((c) => c.employeeId);
+
+    const base = { assignments: dayAssignments, closedEmployeeIds, durationMinutes: SLOT_MINUTES, cutoffMinutes: -1 };
+    const capacity = computeOpenSlots({ ...base, appointments: [] }).length;
+    const open = computeOpenSlots({ ...base, appointments: dayAppointments }).length;
+    const booked = dayAppointments.length;
+
+    if (capacity === 0) result[key] = booked > 0 ? "full" : "closed";
+    else if (booked === 0) result[key] = "free";
+    else result[key] = open === 0 ? "full" : "partial";
+  }
+  return result;
 };
 
 export interface BookAppointmentInput {

@@ -35,3 +35,5 @@ export interface BookingInput {
 export type BookingResult =
   | { ok: true; booking: { serviceName: string; barberName: string; date: string; time: string } }
   | { ok: false; error: string };
+
+export type ConfirmedBooking = Extract<BookingResult, { ok: true }>["booking"];

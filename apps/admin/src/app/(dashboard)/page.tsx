@@ -1,178 +1,192 @@
 import Link from "next/link";
 
-import { CalendarOff, ChevronLeft, ChevronRight, MessageCircle, Phone, Plus } from "lucide-react";
+import { CalendarOff, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
-import { prisma, type AppointmentStatus, type MessageStatus } from "@ds-studio/database";
-import { addDaysToKey, dateKeyToDbDate, toShopDateKey } from "@ds-studio/database/dates";
+import { addDaysToKey, toShopDateKey } from "@ds-studio/database/dates";
+import { cn } from "@ds-studio/ui/utils";
 
-import { AppointmentActions } from "@/components/features/agenda/AppointmentActions";
+import { AgendaDatePicker } from "@/components/features/agenda/AgendaDatePicker";
+import { AppointmentCard } from "@/components/features/agenda/AppointmentCard";
+import { AutoRefresh } from "@/components/features/agenda/AutoRefresh";
+import { ChipLink, ChipRow } from "@/components/ui/ChipLink";
+import { EmptyState } from "@/components/ui/EmptyState";
 
-import { formatDateKey, whatsappLink } from "@/lib/format";
+import { agendaHref, newBookingHref } from "@/lib/agenda";
+import { type AgendaAppointment, type DayClosure, getDayAppointments, getDayClosures } from "@/lib/data/agenda";
+import { getActiveBarbers } from "@/lib/data/employees";
+import { formatDateKey } from "@/lib/format";
 import { dateKeySchema } from "@/lib/validation/admin";
+import type { NamedOption } from "@/types/admin";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<AppointmentStatus, { label: string; className: string }> = {
-  CONFIRMED: { label: "Confirmado", className: "bg-emerald-500/15 text-emerald-300" },
-  COMPLETED: { label: "Completado", className: "bg-secondary text-muted-foreground" },
-  NO_SHOW: { label: "No vino", className: "bg-amber-500/15 text-amber-300" },
-  CANCELLED: { label: "Cancelado", className: "bg-destructive/15 text-red-300" },
+interface AgendaPageProps {
+  searchParams: Promise<{ fecha?: string; barbero?: string }>;
+}
+
+const countConfirmed = (appointments: AgendaAppointment[]) =>
+  appointments.filter((a) => a.status === "CONFIRMED").length;
+
+const dayArrowClass =
+  "flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border hover:bg-secondary";
+
+interface DaySwitcherProps {
+  dateKey: string;
+  today: string;
+  employeeId: string | null;
+  confirmed: number;
+}
+
+const DaySwitcher = ({ dateKey, today, employeeId, confirmed }: DaySwitcherProps) => (
+  <>
+    {/* Tapping the date opens the occupancy calendar */}
+    <div className="flex items-center justify-between gap-3">
+      <Link href={agendaHref(addDaysToKey(dateKey, -1), employeeId)} className={dayArrowClass} aria-label="Día anterior">
+        <ChevronLeft size={18} />
+      </Link>
+      <div className="flex flex-col items-center text-center">
+        <AgendaDatePicker
+          dateKey={dateKey}
+          label={dateKey === today ? "Hoy" : formatDateKey(dateKey)}
+          employeeId={employeeId}
+        />
+        <p className="text-sm text-muted-foreground">
+          {confirmed} {confirmed === 1 ? "turno confirmado" : "turnos confirmados"}
+        </p>
+      </div>
+      <Link href={agendaHref(addDaysToKey(dateKey, 1), employeeId)} className={dayArrowClass} aria-label="Día siguiente">
+        <ChevronRight size={18} />
+      </Link>
+    </div>
+    {dateKey !== today && (
+      <Link
+        href={agendaHref(today, employeeId)}
+        className="inline-flex min-h-11 items-center self-center text-sm text-muted-foreground underline underline-offset-4"
+      >
+        Volver a hoy
+      </Link>
+    )}
+  </>
+);
+
+interface BarbersProps {
+  barbers: NamedOption[];
+  dateKey: string;
+  employeeId: string | null;
+}
+
+const Barbers = ({ barbers, dateKey, employeeId }: BarbersProps) => {
+  if (barbers.length <= 1) return null;
+
+  return (
+    <ChipRow className="md:mx-0 md:px-0">
+      <ChipLink href={agendaHref(dateKey, null)} active={!employeeId}>
+        Todos
+      </ChipLink>
+      {barbers.map((b) => (
+        <ChipLink key={b.id} href={agendaHref(dateKey, b.id)} active={b.id === employeeId}>
+          {b.name}
+        </ChipLink>
+      ))}
+    </ChipRow>
+  );
 };
 
-// Delivery state of the WhatsApp confirmation, so staff know whom to call instead
-const WHATSAPP_LABEL: Partial<Record<MessageStatus, { label: string; className: string }>> = {
-  SENT: { label: "WhatsApp enviado", className: "text-muted-foreground" },
-  DELIVERED: { label: "WhatsApp entregado", className: "text-muted-foreground" },
-  READ: { label: "WhatsApp leído", className: "text-sky-300" },
-  FAILED: { label: "WhatsApp no llegó — llamar", className: "text-red-300" },
+const ClosureNotices = ({ closures }: { closures: DayClosure[] }) =>
+  closures.map((c) => (
+    <p
+      key={c.id}
+      className="flex items-center gap-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200"
+    >
+      <CalendarOff size={16} className="shrink-0" />
+      {c.employee ? `${c.employee.name} no atiende` : "Local cerrado"}
+      {c.reason ? ` · ${c.reason}` : ""}
+    </p>
+  ));
+
+const NewAppointmentLink = ({ dateKey, employeeId }: { dateKey: string; employeeId: string | null }) => (
+  <Link
+    href={newBookingHref(dateKey, employeeId)}
+    className="flex h-12 items-center justify-center gap-2 rounded-md bg-primary text-base font-medium text-primary-foreground md:self-end md:px-6"
+  >
+    <Plus size={18} /> Nuevo turno
+  </Link>
+);
+
+const BarberColumn = ({ barber, appointments }: { barber: NamedOption; appointments: AgendaAppointment[] }) => (
+  <div className="flex flex-col gap-3">
+    <h2 className="flex items-baseline justify-between border-b border-border pb-2 font-medium">
+      {barber.name}
+      <span className="text-sm font-normal text-muted-foreground">{countConfirmed(appointments)} confirmados</span>
+    </h2>
+    {appointments.length === 0 ? (
+      <EmptyState className="p-6 text-center text-sm">Sin turnos</EmptyState>
+    ) : (
+      <ul className="flex flex-col gap-3">
+        {appointments.map((a) => (
+          <AppointmentCard key={a.id} appointment={a} showBarber={false} />
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
+interface AppointmentsProps {
+  appointments: AgendaAppointment[];
+  barbers: NamedOption[];
+  employeeId: string | null;
+}
+
+const Appointments = ({ appointments, barbers, employeeId }: AppointmentsProps) => {
+  if (appointments.length === 0) {
+    return <EmptyState className="p-8 text-center">No hay turnos para este día.</EmptyState>;
+  }
+
+  // Desktop shows one column per barber when looking at everyone
+  const showColumns = !employeeId && barbers.length > 1;
+
+  return (
+    <>
+      {/* Chronological list: always on mobile, and on desktop when filtered to one barber */}
+      <ul className={cn("flex flex-col gap-3", showColumns ? "md:hidden" : "md:grid md:grid-cols-2")}>
+        {appointments.map((a) => (
+          <AppointmentCard key={a.id} appointment={a} showBarber={!employeeId} />
+        ))}
+      </ul>
+
+      {showColumns && (
+        <div className="hidden gap-4 overflow-x-auto pb-2 md:grid md:auto-cols-[minmax(17rem,1fr)] md:grid-flow-col">
+          {barbers.map((b) => (
+            <BarberColumn key={b.id} barber={b} appointments={appointments.filter((a) => a.employeeId === b.id)} />
+          ))}
+        </div>
+      )}
+    </>
+  );
 };
 
-const dayLink =
-  "flex h-11 w-11 items-center justify-center rounded-md border border-border hover:bg-secondary";
-
-export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ fecha?: string }> }) {
-  const { fecha } = await searchParams;
+export default async function AgendaPage({ searchParams }: AgendaPageProps) {
+  const { fecha, barbero } = await searchParams;
   const today = toShopDateKey();
   const dateKey = dateKeySchema.safeParse(fecha).success ? fecha! : today;
-  const date = dateKeyToDbDate(dateKey);
 
-  const [appointments, closures] = await Promise.all([
-    prisma.appointment.findMany({
-      where: { date, deletedAt: null },
-      orderBy: [{ time: "asc" }, { createdAt: "asc" }],
-      select: {
-        id: true,
-        time: true,
-        durationMinutes: true,
-        customerName: true,
-        customerPhone: true,
-        status: true,
-        source: true,
-        customerConfirmedAt: true,
-        cancelledBy: true,
-        messages: {
-          where: { kind: "booking_confirmation", direction: "OUTBOUND" },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { status: true },
-        },
-        service: { select: { name: true } },
-        employee: { select: { name: true } },
-      },
-    }),
-    prisma.closure.findMany({
-      where: { deletedAt: null, startDate: { lte: date }, endDate: { gte: date } },
-      select: { id: true, reason: true, employee: { select: { name: true } } },
-    }),
-  ]);
+  // Fetch everything in one round trip, trusting the URL's barber; validated right after
+  const requestedId = barbero || null;
+  const loadDay = (id: string | null) => Promise.all([getDayAppointments(dateKey, id), getDayClosures(dateKey, id)]);
+  const [barbers, requestedDay] = await Promise.all([getActiveBarbers(), loadDay(requestedId)]);
 
-  const active = appointments.filter((a) => a.status === "CONFIRMED").length;
+  // Unknown ids (e.g. a deleted barber in an old link) fall back to "all", at the cost of a refetch
+  const employeeId = barbers.some((b) => b.id === requestedId) ? requestedId : null;
+  const [appointments, closures] = employeeId === requestedId ? requestedDay : await loadDay(null);
 
   return (
     <section className="flex flex-col gap-5">
-      {/* Day switcher */}
-      <div className="flex items-center justify-between gap-3">
-        <Link href={`/?fecha=${addDaysToKey(dateKey, -1)}`} className={dayLink} aria-label="Día anterior">
-          <ChevronLeft size={18} />
-        </Link>
-        <div className="text-center">
-          <h1 className="text-xl font-semibold">{dateKey === today ? "Hoy" : formatDateKey(dateKey)}</h1>
-          <p className="text-sm text-muted-foreground">
-            {active} {active === 1 ? "turno confirmado" : "turnos confirmados"}
-          </p>
-        </div>
-        <Link href={`/?fecha=${addDaysToKey(dateKey, 1)}`} className={dayLink} aria-label="Día siguiente">
-          <ChevronRight size={18} />
-        </Link>
-      </div>
-      {dateKey !== today && (
-        <Link href="/" className="self-center inline-flex min-h-11 items-center text-sm text-muted-foreground underline underline-offset-4">
-          Volver a hoy
-        </Link>
-      )}
-
-      {closures.map((c) => (
-        <p key={c.id} className="flex items-center gap-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-          <CalendarOff size={16} className="shrink-0" />
-          {c.employee ? `${c.employee.name} no atiende` : "Local cerrado"}
-          {c.reason ? ` · ${c.reason}` : ""}
-        </p>
-      ))}
-
-      {dateKey >= today && (
-        <Link
-          href={`/turnos/nuevo?fecha=${dateKey}`}
-          className="flex h-12 items-center justify-center gap-2 rounded-md bg-primary text-base font-medium text-primary-foreground"
-        >
-          <Plus size={18} /> Nuevo turno
-        </Link>
-      )}
-
-      {appointments.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border p-8 text-center text-muted-foreground">
-          No hay turnos para este día.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {appointments.map((a) => {
-            const status = STATUS_LABEL[a.status];
-            const whatsapp = a.messages[0] ? WHATSAPP_LABEL[a.messages[0].status] : undefined;
-            return (
-              <li key={a.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-2xl font-semibold tabular-nums">{a.time}</p>
-                    <p className="mt-1 font-medium">
-                      {a.customerName}
-                      {a.source === "ADMIN" && <span className="ml-2 text-xs text-muted-foreground">(cargado en el local)</span>}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {a.service.name} · {a.employee.name} · {a.durationMinutes} min
-                    </p>
-                    {a.status === "CONFIRMED" && (a.customerConfirmedAt || whatsapp) && (
-                      <p className="mt-1 text-xs">
-                        {a.customerConfirmedAt ? (
-                          <span className="text-emerald-300">✓ El cliente confirmó asistencia</span>
-                        ) : (
-                          whatsapp && <span className={whatsapp.className}>{whatsapp.label}</span>
-                        )}
-                      </p>
-                    )}
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs ${status.className}`}>
-                    {a.status === "CANCELLED" && a.cancelledBy === "CUSTOMER" ? "Canceló el cliente" : status.label}
-                  </span>
-                </div>
-
-                {a.customerPhone && (
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <a
-                      href={`tel:${a.customerPhone}`}
-                      className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-border text-sm hover:bg-secondary"
-                    >
-                      <Phone size={15} /> Llamar
-                    </a>
-                    <a
-                      href={whatsappLink(a.customerPhone)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-border text-sm hover:bg-secondary"
-                    >
-                      <MessageCircle size={15} /> WhatsApp
-                    </a>
-                  </div>
-                )}
-
-                {a.status === "CONFIRMED" && (
-                  <div className="mt-2">
-                    <AppointmentActions appointmentId={a.id} />
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <AutoRefresh />
+      <DaySwitcher dateKey={dateKey} today={today} employeeId={employeeId} confirmed={countConfirmed(appointments)} />
+      <Barbers barbers={barbers} dateKey={dateKey} employeeId={employeeId} />
+      <ClosureNotices closures={closures} />
+      {dateKey >= today && <NewAppointmentLink dateKey={dateKey} employeeId={employeeId} />}
+      <Appointments appointments={appointments} barbers={barbers} employeeId={employeeId} />
     </section>
   );
 }

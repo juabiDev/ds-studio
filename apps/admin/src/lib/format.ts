@@ -1,5 +1,5 @@
 import type { DayOfWeek } from "@ds-studio/database";
-import { normalizePhone } from "@ds-studio/database/booking";
+import { normalizePhone } from "@ds-studio/database/phone";
 import { dateKeyToDbDate } from "@ds-studio/database/dates";
 
 const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];

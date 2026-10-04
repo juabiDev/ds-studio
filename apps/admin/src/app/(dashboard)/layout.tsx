@@ -4,6 +4,19 @@ import { requireAdmin } from "@ds-studio/auth";
 
 import { AdminNav } from "@/components/features/navigation/AdminNav";
 
+// Plain form POST: works without client JS
+const SignOutButton = () => (
+  <form action="/auth/sign-out" method="post">
+    <button
+      type="submit"
+      aria-label="Salir"
+      className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+    >
+      <LogOut size={18} />
+    </button>
+  </form>
+);
+
 export default async function DashboardLayout({
   children,
 }: Readonly<{
@@ -21,21 +34,13 @@ export default async function DashboardLayout({
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
-            <form action="/auth/sign-out" method="post">
-              <button
-                type="submit"
-                aria-label="Salir"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-              >
-                <LogOut size={18} />
-              </button>
-            </form>
+            <SignOutButton />
           </div>
         </div>
       </header>
 
       {/* Bottom padding keeps content clear of the mobile tab bar */}
-      <main className="mx-auto max-w-5xl px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-6 md:pb-10">{children}</main>
+      <main className="mx-auto px-4 pt-5 md:px-6 md:pb-10">{children}</main>
 
       <div className="md:hidden">
         <AdminNav />

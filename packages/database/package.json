@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./dates": "./src/dates.ts",
     "./booking": "./src/booking.ts",
+    "./phone": "./src/phone.ts",
     "./client": "./src/generated/prisma/client.ts",
     "./settings": "./src/settings.ts",
     "./settings-store": "./src/settings-store.ts"
@@ -19,6 +20,7 @@
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "seed": "prisma db seed",
+    "unseed": "tsx prisma/unseed.ts",
     "stress-test": "tsx scripts/booking-stress-test.ts"
   },
   "dependencies": {

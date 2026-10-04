@@ -1,9 +1,8 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 
-import { dateKeyToDbDate } from "@ds-studio/database/dates";
 import { handleWhatsAppWebhook, verifyWebhookSubscription } from "@ds-studio/messaging/webhook";
 
-import { MONTH_NAMES } from "@/lib/home-content";
+import { formatDayMonth } from "@/lib/format";
 import { notifyCustomerCancellation } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
@@ -27,17 +26,16 @@ export const POST = async (request: NextRequest) => {
     if (result.cancellations.length > 0) {
       after(() =>
         Promise.all(
-          result.cancellations.map((c) => {
-            const d = dateKeyToDbDate(c.dateKey);
-            return notifyCustomerCancellation({
+          result.cancellations.map((c) =>
+            notifyCustomerCancellation({
               customerName: c.customerName,
               customerPhone: c.customerPhone,
               serviceName: c.serviceName,
               barberName: c.barberName,
-              dateLabel: `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]}`,
+              dateLabel: formatDayMonth(c.dateKey),
               time: c.time,
-            });
-          }),
+            }),
+          ),
         ),
       );
     }

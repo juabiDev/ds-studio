@@ -19,6 +19,7 @@
     "db:deploy": "npm run deploy -w @ds-studio/database",
     "db:studio": "npm run studio -w @ds-studio/database",
     "db:seed": "npm run seed -w @ds-studio/database",
+    "db:unseed": "npm run unseed -w @ds-studio/database --",
     "db:stress-test": "npm run stress-test -w @ds-studio/database",
     "auth:create-admin": "npm run create-admin -w @ds-studio/auth --"
   },

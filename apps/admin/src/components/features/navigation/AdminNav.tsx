@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { CalendarDays, CalendarOff, Clock, Settings, Users } from "lucide-react";
 
+import { cn } from "@ds-studio/ui/utils";
 const ITEMS = [
   { href: "/", label: "Agenda", icon: CalendarDays },
   { href: "/horarios", label: "Horarios", icon: Clock },
@@ -28,9 +29,10 @@ export const AdminNav = () => {
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 text-xs md:min-h-10 md:flex-row md:gap-2 md:rounded-md md:px-3 md:text-sm ${
-                  active ? "text-foreground md:bg-secondary" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={cn(
+                  "flex min-h-14 flex-col items-center justify-center gap-1 text-xs md:min-h-10 md:flex-row md:gap-2 md:rounded-md md:px-3 md:text-sm",
+                  active ? "text-foreground md:bg-secondary" : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 <Icon size={20} className="md:size-4" />
                 {label}

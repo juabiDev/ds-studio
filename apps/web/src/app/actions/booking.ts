@@ -4,10 +4,9 @@ import { after } from "next/server";
 
 import { prisma } from "@ds-studio/database";
 import { bookAppointment, isDateInBookingWindow, normalizePhone } from "@ds-studio/database/booking";
-import { dateKeyToDbDate } from "@ds-studio/database/dates";
 import { sendBookingConfirmation } from "@ds-studio/messaging";
 
-import { MONTH_NAMES } from "@/lib/home-content";
+import { formatDayMonth } from "@/lib/format";
 import { notifyNewBooking } from "@/lib/notify";
 import { getClientContext, isIpRateLimited, verifyTurnstile } from "@/lib/spam";
 import { bookingSchema } from "@/lib/validation/booking";
@@ -22,11 +21,6 @@ const ERRORS = {
   BOT_CHECK: "No pudimos verificar que no seas un robot. Recargá la página y probá de nuevo.",
   GENERIC: "No pudimos guardar tu reserva. Probá de nuevo o escribinos por WhatsApp.",
 } as const;
-
-const formatDateLabel = (key: string) => {
-  const d = dateKeyToDbDate(key);
-  return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]}`;
-};
 
 export const createBooking = async (input: BookingInput): Promise<BookingResult> => {
   const parsed = bookingSchema.safeParse(input);
@@ -65,7 +59,7 @@ export const createBooking = async (input: BookingInput): Promise<BookingResult>
           customerPhone: normalizePhone(data.phone),
           serviceName,
           barberName,
-          dateLabel: formatDateLabel(data.date),
+          dateLabel: formatDayMonth(data.date),
           time: data.time,
         }),
       ]),

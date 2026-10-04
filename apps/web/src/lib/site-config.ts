@@ -7,5 +7,5 @@ export const SITE_NAME = "DS STUDIO";
 export const SITE_DESCRIPTION =
   "Barbería urbana de precisión en Montevideo, Uruguay. Cortes clásicos, fade, barba y reserva de turnos online.";
 
-// Contact details, address and opening hours are edited from the admin "Ajustes" page (see lib/business.ts).
+// Contact details, address and opening hours are edited from the admin "Ajustes" page (see lib/data/business.ts).
 export const PRICE_RANGE = "$$";

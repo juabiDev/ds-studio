@@ -11,6 +11,11 @@ export const appointmentStatusSchema = z.object({
   status: z.enum(["CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"]),
 });
 
+export const monthOccupancySchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  employeeId: id.nullable(),
+});
+
 export const slotAvailabilitySchema = z.object({
   employeeId: id,
   availabilityId: id,

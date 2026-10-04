@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { AppointmentStatus } from "@ds-studio/database";
+import { cn } from "@ds-studio/ui/utils";
 
 import { setAppointmentStatus } from "@/app/actions/agenda";
 
@@ -33,11 +34,12 @@ export const AppointmentActions = ({ appointmentId }: { appointmentId: string })
             key={status}
             disabled={pending !== null}
             onClick={() => update(status, confirm)}
-            className={`min-h-11 rounded-md border text-sm transition-colors disabled:opacity-50 ${
+            className={cn(
+              "min-h-11 rounded-md border text-sm transition-colors disabled:opacity-50",
               status === "CANCELLED"
                 ? "border-destructive/50 text-red-300 hover:bg-destructive/15"
-                : "border-border text-foreground hover:bg-secondary"
-            }`}
+                : "border-border text-foreground hover:bg-secondary",
+            )}
           >
             {pending === status ? "…" : label}
           </button>
