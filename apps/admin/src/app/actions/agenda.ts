@@ -8,6 +8,7 @@ import { prisma, type AppointmentStatus } from "@ds-studio/database";
 import { getOccupancyByDay, type DayOccupancy } from "@ds-studio/database/booking";
 import { addDaysToKey, toShopDateKey } from "@ds-studio/database/dates";
 import { sendStaffCancellationNotice } from "@ds-studio/messaging";
+import { sendStaffCancellationEmail } from "@ds-studio/messaging/email";
 
 import { appointmentStatusSchema, monthOccupancySchema } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
@@ -38,8 +39,10 @@ export const setAppointmentStatus = async (input: {
     return { ok: false, error: "No se pudo actualizar el turno." };
   }
 
-  // Tell the customer on WhatsApp, after responding so the admin UI isn't kept waiting
-  if (cancelling) after(() => sendStaffCancellationNotice(appointmentId));
+  // Tell the customer on WhatsApp and by email, after responding so the admin UI isn't kept waiting
+  if (cancelling) {
+    after(() => Promise.all([sendStaffCancellationNotice(appointmentId), sendStaffCancellationEmail(appointmentId)]));
+  }
 
   revalidatePath("/");
   return { ok: true };

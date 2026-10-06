@@ -26,6 +26,8 @@ export interface BookingInput {
   time: string;
   name: string;
   phone: string;
+  /** Receives the booking confirmation and the same-day reminder */
+  email: string;
   /** Honeypot field; always empty for real visitors */
   website?: string;
   /** Cloudflare Turnstile token, when the bot check is enabled */

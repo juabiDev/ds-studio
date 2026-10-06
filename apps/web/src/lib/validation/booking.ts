@@ -21,7 +21,14 @@ export const bookingSchema = z.object({
     .string()
     .trim()
     .regex(/^\+?[\d\s-]{8,20}$/, "Ingresá un teléfono válido"),
+  email: z.string().trim().toLowerCase().max(254).pipe(z.email("Ingresá un email válido")),
   /** Honeypot: hidden from people, so it must stay empty */
   website: z.string().max(200).optional(),
   turnstileToken: z.string().max(2048).optional(),
+});
+
+/** Self-service cancel link from the emails: appointment id + 128-bit HMAC (base64url, 22 chars). */
+export const cancelLinkSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]{1,64}$/i),
+  t: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
 });

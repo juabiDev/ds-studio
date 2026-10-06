@@ -231,6 +231,7 @@ export interface BookAppointmentInput {
   time: string;
   customerName: string;
   customerPhone: string | null;
+  customerEmail?: string | null;
   source: AppointmentSource;
   clientIpHash?: string | null;
 }
@@ -308,6 +309,7 @@ export const bookAppointment = async (
               durationMinutes,
               customerName: input.customerName,
               customerPhone: phone,
+              customerEmail: input.customerEmail?.trim().toLowerCase() || null,
               source: input.source,
               clientIpHash: input.clientIpHash ?? null,
             },

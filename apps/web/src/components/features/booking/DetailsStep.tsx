@@ -10,6 +10,8 @@ interface DetailsStepProps {
   onNameChange: (name: string) => void;
   phone: string;
   onPhoneChange: (phone: string) => void;
+  email: string;
+  onEmailChange: (email: string) => void;
   website: string;
   onWebsiteChange: (website: string) => void;
   /** Cloudflare Turnstile site key; the bot check is skipped when null */
@@ -57,6 +59,8 @@ export const DetailsStep = ({
   onNameChange,
   phone,
   onPhoneChange,
+  email,
+  onEmailChange,
   website,
   onWebsiteChange,
   turnstileSiteKey,
@@ -100,6 +104,19 @@ export const DetailsStep = ({
         onChange={(e) => onPhoneChange(e.target.value)}
         className={textInput}
       />
+      <label className="sr-only" htmlFor="booking-email">Email</label>
+      <input
+        id="booking-email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        placeholder="Email (te enviamos la confirmación)"
+        required
+        maxLength={254}
+        value={email}
+        onChange={(e) => onEmailChange(e.target.value)}
+        className={textInput}
+      />
     </div>
 
     <HoneypotField value={website} onChange={onWebsiteChange} />
@@ -118,7 +135,7 @@ export const DetailsStep = ({
       </button>
       <button
         type="submit"
-        disabled={!name || !phone || submitting || (!!turnstileSiteKey && !turnstileToken)}
+        disabled={!name || !phone || !email || submitting || (!!turnstileSiteKey && !turnstileToken)}
         className={primaryButton}
       >
         {submitting ? "Reservando…" : "Confirmar reserva"} {!submitting && <Check size={13} />}

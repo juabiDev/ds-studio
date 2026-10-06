@@ -34,6 +34,14 @@ const optionalPhone = z
   .regex(/^(\+?[\d\s-]{8,20})?$/, "Teléfono inválido")
   .transform((v) => v || null);
 
+const optionalEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254)
+  .pipe(z.union([z.literal(""), z.email("Email inválido")]))
+  .transform((v) => v || null);
+
 export const adminOpenTimesSchema = z.object({
   serviceId: id,
   employeeId: id,
@@ -47,6 +55,7 @@ export const adminBookingSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   name: z.string().trim().min(2, "Ingresá el nombre del cliente").max(80),
   phone: optionalPhone,
+  email: optionalEmail,
 });
 
 export const closureSchema = z

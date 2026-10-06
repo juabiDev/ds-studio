@@ -8,6 +8,7 @@ import { prisma } from "@ds-studio/database";
 import { DEFAULT_DURATION_MINUTES, bookAppointment, findOpenSlots } from "@ds-studio/database/booking";
 import { toShopDateKey } from "@ds-studio/database/dates";
 import { sendBookingConfirmation } from "@ds-studio/messaging";
+import { sendBookingConfirmationEmail } from "@ds-studio/messaging/email";
 
 import { adminBookingSchema, adminOpenTimesSchema } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
@@ -48,6 +49,7 @@ export const createAdminBooking = async (input: {
   time: string;
   name: string;
   phone: string;
+  email: string;
 }): Promise<ActionResult> => {
   await requireAdmin();
 
@@ -63,6 +65,7 @@ export const createAdminBooking = async (input: {
       time: parsed.data.time,
       customerName: parsed.data.name,
       customerPhone: parsed.data.phone,
+      customerEmail: parsed.data.email,
       source: "ADMIN",
     });
 
@@ -76,11 +79,10 @@ export const createAdminBooking = async (input: {
       };
     }
 
-    // Phone bookings get the same WhatsApp confirmation (with cancel button) as online ones
-    if (parsed.data.phone) {
-      const { id } = result.appointment;
-      after(() => sendBookingConfirmation(id));
-    }
+    // Phone bookings get the same WhatsApp confirmation (with cancel button) and email as online ones
+    const { id } = result.appointment;
+    if (parsed.data.phone) after(() => sendBookingConfirmation(id));
+    if (parsed.data.email) after(() => sendBookingConfirmationEmail(id));
   } catch (error) {
     console.error("[createAdminBooking]", error);
     return { ok: false, error: "No se pudo guardar el turno." };

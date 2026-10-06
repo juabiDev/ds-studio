@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/notifications.ts",
-    "./webhook": "./src/webhook.ts"
+    "./webhook": "./src/webhook.ts",
+    "./email": "./src/email/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

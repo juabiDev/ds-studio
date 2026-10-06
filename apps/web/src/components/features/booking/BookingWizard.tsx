@@ -38,6 +38,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [checking, setChecking] = useState(false);
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
@@ -120,6 +121,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
       time,
       name,
       phone,
+      email,
       website,
       turnstileToken: turnstileToken ?? undefined,
     });
@@ -138,6 +140,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
     setTime(null);
     setName("");
     setPhone("");
+    setEmail("");
     setError(null);
     setSlotNotice(null);
   };
@@ -158,7 +161,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
   };
 
   if (confirmed) {
-    return <BookingConfirmation booking={confirmed} whatsappUrl={whatsappUrl} onReset={reset} />;
+    return <BookingConfirmation booking={confirmed} email={email} whatsappUrl={whatsappUrl} onReset={reset} />;
   }
 
   return (
@@ -198,6 +201,8 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
           onNameChange={setName}
           phone={phone}
           onPhoneChange={setPhone}
+          email={email}
+          onEmailChange={setEmail}
           website={website}
           onWebsiteChange={setWebsite}
           turnstileSiteKey={turnstileSiteKey}

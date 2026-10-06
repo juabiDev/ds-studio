@@ -289,6 +289,8 @@ model Appointment {
   customerName        String            @map("customer_name")
   /// Normalized to E.164 (e.g. +59899123456). Optional for walk-ins added by staff.
   customerPhone       String?           @map("customer_phone")
+  /// Lowercased. Receives the booking confirmation and the same-day reminder by email.
+  customerEmail       String?           @map("customer_email")
   source              AppointmentSource @default(ONLINE)
   /// SHA-256 of the booker's IP (never the raw IP), used only for rate limiting online bookings
   clientIpHash        String?           @map("client_ip_hash")

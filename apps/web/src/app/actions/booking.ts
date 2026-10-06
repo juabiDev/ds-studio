@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { prisma } from "@ds-studio/database";
 import { bookAppointment, isDateInBookingWindow, normalizePhone } from "@ds-studio/database/booking";
 import { sendBookingConfirmation } from "@ds-studio/messaging";
+import { sendBookingConfirmationEmail } from "@ds-studio/messaging/email";
 
 import { formatDayMonth } from "@/lib/format";
 import { notifyNewBooking } from "@/lib/notify";
@@ -43,6 +44,7 @@ export const createBooking = async (input: BookingInput): Promise<BookingResult>
       time: data.time,
       customerName: data.name,
       customerPhone: data.phone,
+      customerEmail: data.email,
       source: "ONLINE",
       clientIpHash: ipHash,
     });
@@ -54,6 +56,7 @@ export const createBooking = async (input: BookingInput): Promise<BookingResult>
     after(() =>
       Promise.all([
         sendBookingConfirmation(id),
+        sendBookingConfirmationEmail(id),
         notifyNewBooking({
           customerName: data.name,
           customerPhone: normalizePhone(data.phone),

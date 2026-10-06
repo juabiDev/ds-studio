@@ -44,6 +44,7 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
   const [date, setDate] = useState(initialDate);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { times, time, setTime } = useOpenTimes({ serviceId, employeeId, date, onError: setError });
@@ -54,7 +55,7 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
     setSaving(true);
     setError(null);
 
-    const result = await createAdminBooking({ serviceId, employeeId, date, time, name, phone });
+    const result = await createAdminBooking({ serviceId, employeeId, date, time, name, phone, email });
     setSaving(false);
 
     if (result.ok) router.push(`/?fecha=${date}`);
@@ -74,7 +75,7 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
 
       <TimeSlotPicker times={times} selected={time} onSelect={setTime} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label htmlFor="name" className={labelClass}>Nombre del cliente</label>
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="off" className={fieldClass} />
@@ -82,6 +83,10 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
         <div>
           <label htmlFor="phone" className={labelClass}>Teléfono (opcional)</label>
           <input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" className={fieldClass} />
+        </div>
+        <div>
+          <label htmlFor="email" className={labelClass}>Email (opcional)</label>
+          <input id="email" type="email" inputMode="email" maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" className={fieldClass} />
         </div>
       </div>
 

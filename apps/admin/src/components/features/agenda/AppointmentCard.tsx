@@ -1,4 +1,4 @@
-import { MessageCircle, Phone } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 
 import type { AppointmentStatus, MessageStatus } from "@ds-studio/database";
 import { cn } from "@ds-studio/ui/utils";
@@ -6,7 +6,12 @@ import { cn } from "@ds-studio/ui/utils";
 import { AppointmentActions } from "@/components/features/agenda/AppointmentActions";
 import { UndoStatusButton } from "@/components/features/agenda/UndoStatusButton";
 
-import type { AgendaAppointment } from "@/lib/data/agenda";
+import {
+  AGENDA_MESSAGE_KINDS,
+  latestMessageStatus,
+  type AgendaAppointment,
+  type AgendaMessageKind,
+} from "@/lib/data/agenda";
 import { whatsappLink } from "@/lib/format";
 
 const STATUS_LABEL: Record<AppointmentStatus, { label: string; className: string }> = {
@@ -16,28 +21,77 @@ const STATUS_LABEL: Record<AppointmentStatus, { label: string; className: string
   CANCELLED: { label: "Cancelado", className: "bg-destructive/15 text-red-300" },
 };
 
-// Delivery state of the WhatsApp confirmation, so staff know whom to call instead
-const WHATSAPP_LABEL: Partial<Record<MessageStatus, { label: string; className: string }>> = {
-  SENT: { label: "WhatsApp enviado", className: "text-muted-foreground" },
-  DELIVERED: { label: "WhatsApp entregado", className: "text-muted-foreground" },
+type Note = { label: string; className: string };
+
+const MUTED_TEXT = "text-muted-foreground";
+const ALERT_TEXT = "text-red-300";
+
+const WHATSAPP_LABEL: Partial<Record<MessageStatus, Note>> = {
+  SENT: { label: "WhatsApp enviado", className: MUTED_TEXT },
+  DELIVERED: { label: "WhatsApp entregado", className: MUTED_TEXT },
   READ: { label: "WhatsApp leído", className: "text-sky-300" },
-  FAILED: { label: "WhatsApp no llegó — llamar", className: "text-red-300" },
+  FAILED: { label: "WhatsApp no llegó — llamar", className: ALERT_TEXT },
 };
+
+// Resend only reports whether it accepted the email, so there is no "delivered"/"read" like WhatsApp
+const EMAIL_LABEL: Record<"confirmation" | "reminder" | "cancellation", Partial<Record<MessageStatus, Note>>> = {
+  confirmation: {
+    SENT: { label: "Email enviado", className: MUTED_TEXT },
+    FAILED: { label: "Email no llegó", className: ALERT_TEXT },
+  },
+  reminder: {
+    SENT: { label: "Recordatorio enviado", className: MUTED_TEXT },
+    FAILED: { label: "Recordatorio no llegó", className: ALERT_TEXT },
+  },
+  cancellation: {
+    SENT: { label: "Aviso de cancelación enviado por email", className: MUTED_TEXT },
+    FAILED: { label: "No se pudo avisar por email — llamar", className: ALERT_TEXT },
+  },
+};
+
+const emailNote = (a: AgendaAppointment, label: keyof typeof EMAIL_LABEL, kind: AgendaMessageKind) => {
+  const status = latestMessageStatus(a, kind);
+  return status ? EMAIL_LABEL[label][status] : undefined;
+};
+
+const isNote = (n: Note | undefined): n is Note => !!n;
 
 const contactButtonClass =
   "flex min-h-11 items-center justify-center gap-2 rounded-md border border-border text-sm hover:bg-secondary";
 
-const ConfirmationNote = ({ appointment: a }: { appointment: AgendaAppointment }) => {
-  const whatsapp = a.messages[0] ? WHATSAPP_LABEL[a.messages[0].status] : undefined;
-  if (a.status !== "CONFIRMED" || (!a.customerConfirmedAt && !whatsapp)) return null;
+const deliveryNotes = (a: AgendaAppointment): Note[] => {
+  if (a.status === "CANCELLED") {
+    return a.cancelledBy === "STAFF"
+      ? [emailNote(a, "cancellation", AGENDA_MESSAGE_KINDS.staffCancellation)].filter(isNote)
+      : [];
+  }
+  if (a.status !== "CONFIRMED") return [];
+
+  const whatsappStatus = latestMessageStatus(a, AGENDA_MESSAGE_KINDS.whatsappConfirmation);
+  const whatsapp: Note | undefined = a.customerConfirmedAt
+    ? { label: "✓ El cliente confirmó asistencia", className: "text-emerald-300" }
+    : whatsappStatus && WHATSAPP_LABEL[whatsappStatus];
+
+  return [
+    whatsapp,
+    emailNote(a, "confirmation", AGENDA_MESSAGE_KINDS.bookingConfirmation),
+    emailNote(a, "reminder", AGENDA_MESSAGE_KINDS.reminder),
+  ].filter(isNote);
+};
+
+/** WhatsApp and email delivery, so staff know whom to call instead. */
+const DeliveryNotes = ({ appointment }: { appointment: AgendaAppointment }) => {
+  const notes = deliveryNotes(appointment);
+  if (notes.length === 0) return null;
 
   return (
-    <p className="mt-1 text-xs">
-      {a.customerConfirmedAt ? (
-        <span className="text-emerald-300">✓ El cliente confirmó asistencia</span>
-      ) : (
-        whatsapp && <span className={whatsapp.className}>{whatsapp.label}</span>
-      )}
+    <p className="mt-1 flex flex-wrap gap-x-2 text-xs">
+      {notes.map((n, i) => (
+        <span key={n.label} className={n.className}>
+          {i > 0 && <span className={cn("mr-2", MUTED_TEXT)}>·</span>}
+          {n.label}
+        </span>
+      ))}
     </p>
   );
 };
@@ -72,7 +126,7 @@ interface AppointmentCardProps {
 export const AppointmentCard = ({ appointment: a, showBarber = true }: AppointmentCardProps) => (
   <li className="rounded-lg border border-border bg-card p-4">
     <div className="flex items-start justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         <p className="text-2xl font-semibold tabular-nums">{a.time}</p>
         <p className="mt-1 font-medium">
           {a.customerName}
@@ -82,7 +136,16 @@ export const AppointmentCard = ({ appointment: a, showBarber = true }: Appointme
           {a.service.name}
           {showBarber && ` · ${a.employee.name}`} · {a.durationMinutes} min
         </p>
-        <ConfirmationNote appointment={a} />
+        {a.customerEmail && (
+          <a
+            href={`mailto:${a.customerEmail}`}
+            className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Mail size={13} className="shrink-0" />
+            <span className="min-w-0 truncate">{a.customerEmail}</span>
+          </a>
+        )}
+        <DeliveryNotes appointment={a} />
       </div>
       <StatusBadge appointment={a} />
     </div>

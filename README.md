@@ -38,7 +38,9 @@ Diseño original en Figma: https://www.figma.com/design/2lfePeOFa0BmF5MEiGNCua/L
 | Protección anti-spam de reservas | ✅ Hecho y probado |
 | WhatsApp: confirmación, confirmar asistencia, cancelar | ✅ Hecho, probado contra un **simulador** de Meta |
 | Email al local por cada reserva/cancelación | ✅ Hecho (sin credenciales solo se escribe en el log) |
-| Recordatorios (día anterior / 2 h antes) | ⏳ Pendiente |
+| Email al cliente: confirmación de la reserva | ✅ Hecho (plantilla local) |
+| Email al cliente: recordatorio el mismo día a las 8:00 | ✅ Hecho (cron de Railway) |
+| Recordatorios por WhatsApp (día anterior / 2 h antes) | ⏳ Pendiente |
 | Email marketing | ⏳ Pendiente (a futuro) |
 
 **Nunca se probó contra servicios reales**: Railway, Meta (WhatsApp), Resend ni Cloudflare Turnstile. Todo se probó en local con PostgreSQL real y un servidor falso que imita la API de Meta. Nada está commiteado todavía.
@@ -105,7 +107,10 @@ npm run dev                   # web en :3000, admin en :3001
 | `NEXT_PUBLIC_SITE_URL` | ambas | Recomendada | URL del sitio público (SEO y link en los mensajes de WhatsApp) |
 | `IP_HASH_SALT` | web | Recomendada | Se mezcla con las IPs antes de guardarlas hasheadas |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | web | Opcional | Control anti-bots de Cloudflare. Sin estas variables, no se usa |
-| `RESEND_API_KEY`, `BOOKING_NOTIFY_EMAIL`, `BOOKING_EMAIL_FROM` | web | Opcional | Email al local por cada reserva/cancelación. Sin estas variables, solo se escribe en el log |
+| `RESEND_API_KEY`, `BOOKING_EMAIL_FROM` | ambas | Opcional | Emails al cliente (confirmación y recordatorio). Sin estas variables, solo se escribe en el log |
+| `BOOKING_NOTIFY_EMAIL` | web | Opcional | Email al local por cada reserva/cancelación |
+| `BOOKING_LINK_SECRET` | ambas | Recomendada | Firma el link "Cancelar turno" de los emails (mismo valor en web y admin). Sin esta variable, los emails salen sin ese botón |
+| `CRON_SECRET` | web + cron | Para recordatorios | Protege `/api/cron/reminders`. Sin esta variable el endpoint responde 404 |
 | `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | ambas | Opcional | WhatsApp. Si falta alguna, no se envía nada y el webhook responde 404 |
 | `WHATSAPP_GRAPH_VERSION` | ambas | Opcional | Por defecto `v26.0` |
 | `WHATSAPP_TEMPLATE_LANGUAGE` | ambas | Opcional | Por defecto `es` |
@@ -258,7 +263,15 @@ Cada acción del admin verifica la sesión y el rol (`requireAdmin()`) y valida 
 
 ## 12. Email
 
-- **Hoy:** un email al local por cada reserva online y cada cancelación hecha por el cliente, vía **Resend** ([`apps/web/src/lib/notify.ts`](apps/web/src/lib/notify.ts)).
+- **Hoy:** todo vía **Resend**, desde `BOOKING_EMAIL_FROM` (`contacto@dsstudio.com.uy`):
+  - **Confirmación al cliente** apenas reserva (online, o desde el admin si se cargó el email).
+  - **Recordatorio al cliente** el día del turno a las 8:00, con la hora y el barbero.
+  - **Aviso al cliente cuando el local cancela** el turno desde el admin, con botón para reservar otro.
+  - **Aviso al local** por cada reserva online y cada cancelación hecha por el cliente ([`apps/web/src/lib/notify.ts`](apps/web/src/lib/notify.ts)).
+- **Cancelar desde el email:** la confirmación y el recordatorio traen un botón "Cancelar turno" (hasta 2 horas antes; después, el email sugiere WhatsApp). El link abre `/cancelar-turno/<id>?t=<firma>`, que pide confirmar con un botón: abrir el link no cancela nada, porque los filtros de Outlook y Gmail abren los links solos. La firma es un HMAC con `BOOKING_LINK_SECRET`, así que no se guarda ningún token. Al cancelar se avisa al local igual que con WhatsApp.
+- **Tono:** los emails usan "tú" neutro; el sitio sigue con "vos".
+- **Plantillas:** locales, en [`packages/messaging/src/email/templates.ts`](packages/messaging/src/email/templates.ts). Se pueden pasar a plantillas de Resend más adelante.
+- Cada envío queda en `message_logs` (canal `EMAIL`, tipos `booking_confirmation_email`, `reminder_email` y `staff_cancellation_email`). El recordatorio no se repite si el cron corre dos veces, y uno que falló se reintenta en la próxima corrida.
 - **Recomendación:** una clave de Resend de **"solo envío" limitada a un subdominio** (por ejemplo `notificaciones.tudominio.uy`). Si se filtra, no da ningún acceso a Google Workspace ni a tu dominio principal.
 - **Google Workspace queda solo para el correo de las personas.** No se integra con la app (ver decisiones en la sección 16).
 - **Además:** configurar **DMARC** (`p=quarantine` y después `p=reject`) en el dominio principal, para que nadie pueda falsificar emails a su nombre.
@@ -297,6 +310,16 @@ Dos servicios desde este repo, más una base PostgreSQL:
 - En los dos: las variables `WHATSAPP_*` si se usa WhatsApp, y `NEXT_PUBLIC_SITE_URL`.
 - Las migraciones corren una sola vez, desde el pre-deploy de web.
 - Railway **bloquea SMTP en el plan Hobby.** Por eso el email usa la API HTTPS de Resend.
+- En los dos: `RESEND_API_KEY`, `BOOKING_EMAIL_FROM` y `BOOKING_LINK_SECRET` (mismo valor). En web, además: `CRON_SECRET`.
+
+**Recordatorios (cron).** Un tercer servicio desde este repo, sin dominio público:
+
+| Servicio | Cron schedule | Start | Variables |
+|---|---|---|---|
+| reminders | `0 11 * * *` (Railway usa UTC: 11:00 UTC = 08:00 en Montevideo) | `npm run cron:reminders` | `NEXT_PUBLIC_SITE_URL`, `CRON_SECRET` (el mismo que en web) |
+
+El servicio solo llama a `POST /api/cron/reminders` del sitio y termina. Para probarlo a mano:
+`curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<sitio>/api/cron/reminders`.
 
 **Primera vez:** `db:deploy` → `db:seed` → `auth:create-admin`.
 
@@ -368,7 +391,8 @@ No hay tests automáticos en el repo, salvo el stress test. Lo siguiente se prob
 - [ ] Descripción de cada servicio y política de cancelación.
 
 **Próximas funcionalidades**
-- [ ] Recordatorios por WhatsApp el día anterior y 2 horas antes. Necesita una tarea programada en Railway.
+- [ ] Recordatorios por WhatsApp el día anterior y 2 horas antes (el cron de emails ya existe y se puede reutilizar).
+- [ ] Pasar las plantillas de email a Resend.
 - [ ] Pantallas del admin para gestionar servicios, barberos y fotos.
 - [ ] Email marketing con consentimiento.
 - [ ] Tests unitarios de `findOpenSlots` y configuración de ESLint.

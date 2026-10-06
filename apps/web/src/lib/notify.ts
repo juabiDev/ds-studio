@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getEmailConfig, sendEmail } from "@ds-studio/messaging/email";
+
 interface BookingNotice {
   customerName: string;
   customerPhone: string;
@@ -9,8 +11,6 @@ interface BookingNotice {
   time: string;
 }
 
-const RESEND_URL = "https://api.resend.com/emails";
-
 const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -19,13 +19,12 @@ const escapeHtml = (value: string) =>
  * BOOKING_EMAIL_FROM; until then it only logs. Failures never affect the booking itself.
  */
 const notifyShop = async (heading: string, notice: BookingNotice) => {
-  const apiKey = process.env.RESEND_API_KEY;
+  const config = getEmailConfig();
   const to = process.env.BOOKING_NOTIFY_EMAIL;
-  const from = process.env.BOOKING_EMAIL_FROM;
 
   const summary = `${notice.serviceName} con ${notice.barberName} · ${notice.dateLabel} ${notice.time} hs`;
 
-  if (!apiKey || !to || !from) {
+  if (!config || !to) {
     console.info(`[booking] ${heading}: ${notice.customerName} (${notice.customerPhone}) — ${summary}`);
     return;
   }
@@ -36,16 +35,13 @@ const notifyShop = async (heading: string, notice: BookingNotice) => {
     <p>Cliente: ${escapeHtml(notice.customerName)}<br/>Teléfono: ${escapeHtml(notice.customerPhone)}</p>
   `;
 
-  try {
-    const res = await fetch(RESEND_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: to.split(",").map((e) => e.trim()), subject: `${heading}: ${summary}`, html }),
-    });
-    if (!res.ok) console.error("[notifyShop] Resend responded", res.status, await res.text());
-  } catch (error) {
-    console.error("[notifyShop]", error);
-  }
+  const result = await sendEmail(config, {
+    to: to.split(",").map((e) => e.trim()),
+    subject: `${heading}: ${summary}`,
+    html,
+    text: [heading, summary, `Cliente: ${notice.customerName}`, `Teléfono: ${notice.customerPhone}`].join("\n"),
+  });
+  if (!result.ok) console.error("[notifyShop]", result.error);
 };
 
 export const notifyNewBooking = (notice: BookingNotice) => notifyShop("Nuevo turno", notice);

@@ -21,7 +21,8 @@
     "db:seed": "npm run seed -w @ds-studio/database",
     "db:unseed": "npm run unseed -w @ds-studio/database --",
     "db:stress-test": "npm run stress-test -w @ds-studio/database",
-    "auth:create-admin": "npm run create-admin -w @ds-studio/auth --"
+    "auth:create-admin": "npm run create-admin -w @ds-studio/auth --",
+    "cron:reminders": "node scripts/send-reminders.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.4"
