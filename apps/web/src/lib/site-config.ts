@@ -25,6 +25,15 @@ export const SITE_DESCRIPTION =
 export const FOUNDING_YEAR = "2018";
 
 /**
+ * Provider details that Decreto 167/021 (MERCOSUR e-commerce rules) asks to show before a booking.
+ * Shown on /terminos and /privacidad. TODO before launch: replace the placeholders (docs/go-live.md).
+ */
+export const LEGAL_ENTITY = {
+  name: "[RAZÓN SOCIAL]",
+  rut: "[RUT]",
+};
+
+/**
  * Search engines may index the site only when SITE_INDEXING=on. Off by default so previews and
  * the Railway domain never get indexed; turn it on in production once the real domain is live.
  */

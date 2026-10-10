@@ -9,6 +9,6 @@ export const BookServiceButton = ({ serviceId }: { serviceId: string }) => (
     onClick={() => window.dispatchEvent(new CustomEvent(SELECT_SERVICE_EVENT, { detail: { serviceId } }))}
     className="inline-flex items-center min-h-11 -my-2 font-condensed text-xs tracking-[0.3em] uppercase text-white/60 group-hover:text-white/80 hover:text-white transition-colors"
   >
-    Agendar →
+    Reservar →
   </a>
 );

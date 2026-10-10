@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ds-studio/ui/table";
 
 import { type BarberWithSlotCounts, getBarbersWithSlotCounts } from "@/lib/data/employees";
+import { plural } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Barberos" };
 export const dynamic = "force-dynamic";
@@ -22,8 +23,8 @@ const BarberCards = ({ barbers }: { barbers: BarberWithSlotCounts[] }) => (
             {e.specialty ? ` · ${e.specialty}` : ""}
           </p>
           <p className="mt-2 text-sm">
-            <span className="text-emerald-300">{e.open} disponibles</span>
-            <span className="text-muted-foreground"> · {e.blocked} bloqueados por semana</span>
+            <span className="text-emerald-300">{plural(e.open, "horario disponible", "horarios disponibles")}</span>
+            <span className="text-muted-foreground"> · {plural(e.blocked, "bloqueado", "bloqueados")} por semana</span>
           </p>
         </Link>
       </li>

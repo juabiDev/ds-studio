@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireAdmin } from "@ds-studio/auth";
 import { prisma } from "@ds-studio/database";
 import { DEFAULT_SITE_SETTINGS } from "@ds-studio/database/settings";
 import { SITE_SETTINGS_ID } from "@ds-studio/database/settings-store";
 
+import { refreshPublicSite } from "@/lib/refresh-public-site";
 import { moveInList } from "@/lib/reorder";
 import { faqItemSchema, faqVisibilitySchema, firstIssue, idSchema, moveSchema } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
@@ -15,6 +17,12 @@ export interface FaqItemInput {
   question: string;
   answer: string;
 }
+
+// Admin screen now, public site right after the response
+const revalidate = () => {
+  revalidatePath("/preguntas");
+  after(refreshPublicSite);
+};
 
 /** Shows or hides the whole FAQ section on the public site. */
 export const setFaqVisibility = async (input: { visible: boolean }): Promise<ActionResult> => {
@@ -35,7 +43,7 @@ export const setFaqVisibility = async (input: { visible: boolean }): Promise<Act
     return { ok: false, error: "No se pudo guardar." };
   }
 
-  revalidatePath("/preguntas");
+  revalidate();
   return { ok: true };
 };
 
@@ -54,7 +62,7 @@ export const createFaqItem = async (input: FaqItemInput): Promise<ActionResult> 
     return { ok: false, error: "No se pudo agregar la pregunta." };
   }
 
-  revalidatePath("/preguntas");
+  revalidate();
   return { ok: true };
 };
 
@@ -74,7 +82,7 @@ export const updateFaqItem = async (input: FaqItemInput & { id: string }): Promi
     return { ok: false, error: "No se pudo guardar la pregunta." };
   }
 
-  revalidatePath("/preguntas");
+  revalidate();
   return { ok: true };
 };
 
@@ -99,7 +107,7 @@ export const moveFaqItem = async (input: { id: string; direction: "up" | "down" 
     return { ok: false, error: "No se pudo mover la pregunta." };
   }
 
-  revalidatePath("/preguntas");
+  revalidate();
   return { ok: true };
 };
 
@@ -117,6 +125,6 @@ export const deleteFaqItem = async (input: { id: string }): Promise<ActionResult
     return { ok: false, error: "No se pudo eliminar la pregunta." };
   }
 
-  revalidatePath("/preguntas");
+  revalidate();
   return { ok: true };
 };

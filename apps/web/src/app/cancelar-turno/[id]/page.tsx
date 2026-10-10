@@ -5,8 +5,9 @@ import { getAppointmentForCancelLink, ONLINE_CANCEL_CUTOFF_MINUTES, type CancelL
 
 import { cancelBookingFromLink } from "@/app/actions/cancel-booking";
 import { CancelSubmitButton } from "@/components/features/booking/CancelSubmitButton";
-import { primaryButton, secondaryButton } from "@/components/features/booking/wizard-styles";
+import { MessageCard } from "@/components/ui/MessageCard";
 
+import { primaryButton, secondaryButton } from "@/lib/button-styles";
 import { getBusinessInfo } from "@/lib/data/business";
 import { formatDateKey } from "@/lib/format";
 import { cancelLinkSchema } from "@/lib/validation/booking";
@@ -49,7 +50,7 @@ const MESSAGES = {
   },
   too_late: {
     title: "Ya no se puede cancelar online",
-    body: `Los turnos se pueden cancelar desde acá hasta ${CUTOFF_HOURS} horas antes. Escríbenos por WhatsApp y lo vemos.`,
+    body: `Los turnos se pueden cancelar desde aquí hasta ${CUTOFF_HOURS} horas antes. Escríbenos por WhatsApp y lo vemos.`,
   },
   closed: {
     title: "Este turno ya pasó",
@@ -63,63 +64,61 @@ export default async function CancelBookingPage({ params, searchParams }: Cancel
 
   const message = !lookup.ok ? MESSAGES.invalid : lookup.state === "cancelable" ? null : MESSAGES[lookup.state];
 
-  return (
-    <main className="min-h-dvh bg-background flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md text-center border border-white/15 px-6 py-12">
-        <Link href="/" className="font-display text-white text-xl font-bold tracking-[0.3em]">
-          DS STUDIO
-        </Link>
+  const appointmentLine = lookup.ok && (
+    <>
+      <p className="font-condensed text-white/70 tracking-wider text-sm uppercase">
+        {lookup.appointment.serviceName} con {lookup.appointment.barberName}
+      </p>
+      <p className="font-display text-xl text-white mt-2">
+        {formatDateKey(lookup.appointment.dateKey)} a las {lookup.appointment.time} hs
+      </p>
+    </>
+  );
 
-        {lookup.ok && (
-          <div className="mt-8">
-            <p className="font-condensed text-white/70 tracking-wider text-sm uppercase">
-              {lookup.appointment.serviceName} con {lookup.appointment.barberName}
-            </p>
-            <p className="font-display text-xl text-white mt-2">
-              {formatDateKey(lookup.appointment.dateKey)} a las {lookup.appointment.time} hs
-            </p>
-          </div>
-        )}
-
-        {message ? (
+  if (message || !lookup.ok) {
+    const { title, body } = message ?? MESSAGES.invalid;
+    return (
+      <MessageCard
+        eyebrow={appointmentLine}
+        title={title}
+        actions={
           <>
-            <h1 className="font-display text-3xl font-bold text-white mt-8 mb-3">{message.title}</h1>
-            <p className="font-body text-white/65 text-sm max-w-xs mx-auto">{message.body}</p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <a href={business.whatsappUrl} target="_blank" rel="noopener noreferrer" className={primaryButton}>
-                Escribir por WhatsApp
-              </a>
-              <Link href="/#agendar" className={secondaryButton}>
-                Reservar turno
-              </Link>
-            </div>
+            <a href={business.whatsappUrl} target="_blank" rel="noopener noreferrer" className={primaryButton}>
+              Escribir por WhatsApp
+            </a>
+            <Link href="/#agendar" className={secondaryButton}>
+              Reservar turno
+            </Link>
           </>
-        ) : (
-          lookup.ok && (
-            <>
-              <h1 className="font-display text-3xl font-bold text-white mt-8 mb-3">
-                ¿Cancelar tu turno, {lookup.appointment.firstName}?
-              </h1>
-              <p className="font-body text-white/65 text-sm max-w-xs mx-auto">
-                El horario queda libre para otra persona. Si solo quieres cambiarlo, escríbenos por WhatsApp.
-              </p>
-              {error && (
-                <p role="alert" className="mt-4 font-body text-sm text-red-300">
-                  No pudimos cancelar el turno. Prueba de nuevo o escríbenos por WhatsApp.
-                </p>
-              )}
-              <form action={cancelBookingFromLink} className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-                <input type="hidden" name="id" value={id} />
-                <input type="hidden" name="t" value={t} />
-                <CancelSubmitButton />
-                <Link href="/" className={secondaryButton}>
-                  Mantener turno
-                </Link>
-              </form>
-            </>
-          )
-        )}
-      </div>
-    </main>
+        }
+      >
+        <p>{body}</p>
+      </MessageCard>
+    );
+  }
+
+  return (
+    <MessageCard
+      eyebrow={appointmentLine}
+      title={`¿Cancelar tu turno, ${lookup.appointment.firstName}?`}
+      actions={
+        // `contents`: the form's buttons sit directly in the card's actions row
+        <form action={cancelBookingFromLink} className="contents">
+          <input type="hidden" name="id" value={id} />
+          <input type="hidden" name="t" value={t} />
+          <CancelSubmitButton />
+          <Link href="/" className={secondaryButton}>
+            Mantener turno
+          </Link>
+        </form>
+      }
+    >
+      <p>El horario queda libre para otra persona. Si solo quieres cambiarlo, escríbenos por WhatsApp.</p>
+      {error && (
+        <p role="alert" className="mt-4 text-red-300">
+          No pudimos cancelar el turno. Prueba de nuevo o escríbenos por WhatsApp.
+        </p>
+      )}
+    </MessageCard>
   );
 }

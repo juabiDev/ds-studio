@@ -224,7 +224,7 @@ export const staffCancellationEmail = (data: AppointmentEmailData): RenderedEmai
       textDetails(data),
       "",
       apology,
-      `Reservar: ${bookUrl}`,
+      ...(bookUrl ? [`Reservar: ${bookUrl}`] : []),
       `WhatsApp: ${data.shop.phone}`,
       "",
       footerText(data),

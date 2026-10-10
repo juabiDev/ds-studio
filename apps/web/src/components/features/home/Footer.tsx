@@ -60,6 +60,13 @@ export const Footer = ({ instagramUrl, facebookUrl }: FooterProps) => (
         >
           Política de privacidad
         </Link>
+        <span className="text-white/30" aria-hidden="true">·</span>
+        <Link
+          href="/terminos"
+          className="inline-flex items-center min-h-11 font-condensed text-white/50 hover:text-white text-xs tracking-[0.2em] transition-colors"
+        >
+          Términos y condiciones
+        </Link>
       </div>
     </div>
   </footer>

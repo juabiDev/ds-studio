@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { sendTodayReminderEmails } from "@ds-studio/messaging/email";
 
-import { cronAuthFailure } from "@/lib/cron-auth";
+import { bearerAuthFailure } from "@/lib/bearer-auth";
 
 export const dynamic = "force-dynamic";
 // Sending is throttled to stay under Resend's rate limit, so a busy day takes a while
@@ -10,7 +10,7 @@ export const maxDuration = 300;
 
 /** Daily same-day reminder emails, triggered at 08:00 (Montevideo) by the Railway cron service (scripts/send-reminders.mjs). */
 const handler = async (request: NextRequest) => {
-  const failure = cronAuthFailure(request);
+  const failure = bearerAuthFailure(request, process.env.CRON_SECRET);
   if (failure) return new NextResponse(null, { status: failure });
 
   try {

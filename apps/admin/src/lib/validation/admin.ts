@@ -1,10 +1,11 @@
 import { z } from "zod";
 
+import { isValidDateKey } from "@ds-studio/database/dates";
 import { optionalText } from "@ds-studio/database/settings";
 
 const id = z.string().min(1).max(64);
 
-export const dateKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export const dateKeySchema = z.string().refine(isValidDateKey, "Fecha inválida");
 
 export const dayOfWeekSchema = z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]);
 
@@ -30,11 +31,7 @@ export const dayAvailabilitySchema = z.object({
   available: z.boolean(),
 });
 
-const optionalPhone = z
-  .string()
-  .trim()
-  .regex(/^(\+?[\d\s-]{8,20})?$/, "Teléfono inválido")
-  .transform((v) => v || null);
+const phone = z.string().trim().regex(/^\+?[\d\s-]{8,20}$/, "Ingresa un teléfono válido");
 
 const optionalEmail = z
   .string()
@@ -56,7 +53,8 @@ export const adminBookingSchema = z.object({
   date: dateKeySchema,
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   name: z.string().trim().min(2, "Ingresa el nombre del cliente").max(80),
-  phone: optionalPhone,
+  // Required: it's how staff reach the customer (WhatsApp confirmations aren't always active)
+  phone,
   email: optionalEmail,
 });
 

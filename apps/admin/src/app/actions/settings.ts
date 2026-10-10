@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireAdmin } from "@ds-studio/auth";
 import { WEEK_DAYS, siteSettingsSchema } from "@ds-studio/database/settings";
 import { saveSiteSettings } from "@ds-studio/database/settings-store";
 
 import { WEEKDAYS } from "@/lib/format";
+import { refreshPublicSite } from "@/lib/refresh-public-site";
 import type { ActionResult } from "@/types/admin";
 
 /** "-34.906, -56.178" (as copied from Google Maps) -> numbers; NaN fails validation. */
@@ -54,5 +56,6 @@ export const updateSiteSettings = async (formData: FormData): Promise<ActionResu
   }
 
   revalidatePath("/ajustes");
+  after(refreshPublicSite);
   return { ok: true };
 };

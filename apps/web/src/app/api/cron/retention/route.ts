@@ -3,13 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@ds-studio/database";
 import { purgeExpiredCustomerData } from "@ds-studio/database/retention";
 
-import { cronAuthFailure } from "@/lib/cron-auth";
+import { bearerAuthFailure } from "@/lib/bearer-auth";
 
 export const dynamic = "force-dynamic";
 
 /** Daily anonymization of old customer data, run by the same Railway cron service as the reminders. */
 const handler = async (request: NextRequest) => {
-  const failure = cronAuthFailure(request);
+  const failure = bearerAuthFailure(request, process.env.CRON_SECRET);
   if (failure) return new NextResponse(null, { status: failure });
 
   try {

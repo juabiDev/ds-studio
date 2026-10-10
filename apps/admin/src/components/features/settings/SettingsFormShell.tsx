@@ -22,7 +22,7 @@ export const SettingsFormShell = ({ children }: { children: ReactNode }) => {
     setSaving(false);
     setStatus(
       result.ok
-        ? { ok: true, message: "Guardado. El sitio se actualiza en hasta 5 minutos." }
+        ? { ok: true, message: "Guardado. El sitio ya muestra los cambios." }
         : { ok: false, message: result.error },
     );
   };

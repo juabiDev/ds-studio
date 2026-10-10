@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireAdmin } from "@ds-studio/auth";
 import { prisma } from "@ds-studio/database";
 
+import { refreshPublicSite } from "@/lib/refresh-public-site";
 import { firstIssue, idSchema, serviceSchema } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
 
@@ -18,6 +20,7 @@ export interface ServiceInput {
 const revalidate = () => {
   revalidatePath("/servicios");
   revalidatePath("/turnos/nuevo");
+  after(refreshPublicSite);
 };
 
 export const createService = async (input: ServiceInput): Promise<ActionResult> => {

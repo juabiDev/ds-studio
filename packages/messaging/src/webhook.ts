@@ -1,34 +1,59 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { Prisma, prisma, type MessageStatus } from "@ds-studio/database";
 import { normalizePhone } from "@ds-studio/database/booking";
 import { dbDateToKey, shopNowMinutes, timeToMinutes, toShopDateKey } from "@ds-studio/database/dates";
 
 import { getPublicSiteUrl, getWhatsAppConfig, type WhatsAppConfig } from "./config";
+import { isWithinCancelWindow, ONLINE_CANCEL_CUTOFF_MINUTES } from "./email/cancel-link";
 import { isValidWebhookSignature } from "./signature";
 import { firstName, formatLongDate } from "./format";
 import { hashActionToken, parseButtonPayload } from "./tokens";
 import { sendText } from "./whatsapp-client";
 
-// Only the fields this app reads; everything else in Meta's payload is ignored.
-interface InboundMessage {
-  id: string;
-  from: string;
-  type: string;
-  button?: { payload?: string; text?: string };
-  interactive?: { type?: string; button_reply?: { id?: string } };
-}
+// Only the fields this app reads; anything else in Meta's payload is dropped by Zod.
+const inboundMessageSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  type: z.string(),
+  button: z.object({ payload: z.string().optional(), text: z.string().optional() }).optional(),
+  interactive: z
+    .object({ type: z.string().optional(), button_reply: z.object({ id: z.string().optional() }).optional() })
+    .optional(),
+});
 
-interface StatusUpdate {
-  id: string;
-  status: string;
-  errors?: { code?: number; title?: string; message?: string }[];
-}
+const statusUpdateSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  errors: z
+    .array(z.object({ code: z.number().optional(), title: z.string().optional(), message: z.string().optional() }))
+    .optional(),
+});
 
-interface WebhookPayload {
-  object?: string;
-  entry?: { changes?: { field?: string; value?: { messages?: InboundMessage[]; statuses?: StatusUpdate[] } }[] }[];
-}
+const webhookPayloadSchema = z.object({
+  object: z.string().optional(),
+  entry: z
+    .array(
+      z.object({
+        changes: z
+          .array(
+            z.object({
+              field: z.string().optional(),
+              value: z
+                .object({ messages: z.array(inboundMessageSchema).optional(), statuses: z.array(statusUpdateSchema).optional() })
+                .optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
+});
+
+type InboundMessage = z.infer<typeof inboundMessageSchema>;
+type StatusUpdate = z.infer<typeof statusUpdateSchema>;
 
 export interface CustomerCancellation {
   appointmentId: string;
@@ -65,12 +90,19 @@ export const handleWhatsAppWebhook = async (rawBody: string, signature: string |
   if (!config) return { status: 404, cancellations: [] };
   if (!isValidWebhookSignature(rawBody, signature, config.appSecret)) return { status: 401, cancellations: [] };
 
-  let payload: WebhookPayload;
+  let json: unknown;
   try {
-    payload = JSON.parse(rawBody) as WebhookPayload;
+    json = JSON.parse(rawBody);
   } catch {
     return { status: 200, cancellations: [] }; // signed but unparseable: nothing to do, don't make Meta retry
   }
+  const parsed = webhookPayloadSchema.safeParse(json);
+  if (!parsed.success) {
+    // Signed but not the shape we read: retrying won't change it, so acknowledge and log
+    console.warn("[whatsapp] Ignored webhook with unexpected shape", parsed.error.issues[0]?.path.join("."));
+    return { status: 200, cancellations: [] };
+  }
+  const payload = parsed.data;
 
   const cancellations: CustomerCancellation[] = [];
 
@@ -214,6 +246,14 @@ const processButtonTap = async (
       await prisma.appointment.update({ where: { id: appointment.id }, data: { customerConfirmedAt: new Date() } });
     }
     await reply(`¡Gracias, ${name}! Te esperamos el ${when}. Si no puedes venir, toca "Cancelar turno" en el mensaje anterior.`);
+    return null;
+  }
+
+  // Same rule as the email link and the FAQ: online cancellation closes 2 hours before the turn
+  if (!isWithinCancelWindow(dateKey, appointment.time)) {
+    await reply(
+      `Faltan menos de ${ONLINE_CANCEL_CUTOFF_MINUTES / 60} horas para tu turno, así que ya no se puede cancelar por aquí. Responde este mensaje y lo vemos.`,
+    );
     return null;
   }
 

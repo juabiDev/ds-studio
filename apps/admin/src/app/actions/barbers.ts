@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireAdmin } from "@ds-studio/auth";
 import { prisma } from "@ds-studio/database";
 
 import { getUploadedImage } from "@/lib/cloudflare-images";
+import { refreshPublicSite } from "@/lib/refresh-public-site";
 import { barberPhotoSchema, barberProfileSchema, firstIssue } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
 
@@ -20,6 +22,7 @@ export interface BarberProfileInput {
 const revalidate = (employeeId: string) => {
   revalidatePath("/barberos");
   revalidatePath(`/barberos/${employeeId}`);
+  after(refreshPublicSite);
 };
 
 export const updateBarberProfile = async (input: BarberProfileInput): Promise<ActionResult> => {

@@ -81,8 +81,8 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} required autoComplete="off" className={fieldClass} />
         </div>
         <div>
-          <label htmlFor="phone" className={labelClass}>Teléfono (opcional)</label>
-          <input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" className={fieldClass} />
+          <label htmlFor="phone" className={labelClass}>Teléfono</label>
+          <input id="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required autoComplete="off" className={fieldClass} />
         </div>
         <div>
           <label htmlFor="email" className={labelClass}>Email (opcional)</label>

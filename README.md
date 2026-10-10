@@ -110,6 +110,7 @@ npm run dev                   # web en :3000, admin en :3001
 | `BETTER_AUTH_SECRET` | admin | ✅ | Mínimo 32 caracteres aleatorios (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | admin | ✅ | URL pública del admin |
 | `NEXT_PUBLIC_SITE_URL` | ambas + cron | ✅ en producción | URL del sitio público (`https://www.dsstudio.com.uy`): SEO, links de los emails y de WhatsApp. **Se lee al compilar** |
+| `REVALIDATE_SECRET` | web + admin | Recomendada | Mismo valor en las dos: después de cada cambio en el panel, el sitio se actualiza al instante (`POST /api/revalidate`). Sin esta variable, tarda hasta 5 minutos |
 | `SITE_INDEXING` | web | Al lanzar | `on` permite que Google indexe el sitio (`robots.txt` y meta `robots`). Vacía = no indexar. **Se lee al compilar** |
 | `CLIENT_IP_HEADER` | ambas | ❌ No usar hoy | Header con la IP real del cliente. Por defecto `x-real-ip` (Railway). Solo cambia si se pone el proxy de Cloudflare delante |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_IMAGES_API_TOKEN` | admin | Para fotos | Subida de fotos de galería y barberos a Cloudflare Images. Sin estas variables, el panel explica que falta configurarlo |
@@ -201,7 +202,8 @@ Las reservas online se pueden hacer desde hoy hasta 14 días adelante.
 
 `apps/web` — [`src/app/page.tsx`](apps/web/src/app/page.tsx)
 
-- **Servicios y barberos vienen de la base de datos.** La página es estática y se regenera cada 5 minutos. **El build necesita `DATABASE_URL`.**
+- **Servicios y barberos vienen de la base de datos.** La página es estática (ISR): se regenera al instante cuando se guarda algo en el panel (`/api/revalidate`) y, como respaldo, cada 5 minutos. **El build necesita `DATABASE_URL`.**
+- **Páginas legales:** `/privacidad` (Ley 18.331, incluye cookies) y `/terminos` (condiciones de reserva, Ley 17.250 y Decreto 167/021). Los datos legales del local (razón social y RUT) están en `LEGAL_ENTITY`, en [`site-config.ts`](apps/web/src/lib/site-config.ts).
 - **Wizard de reserva en 3 pasos:** Servicio → Horario (barbero, fecha y hora) → Datos (nombre y teléfono). Tocar un servicio lleva directo al paso 2, y "Agendar →" en una tarjeta de servicio abre el wizard con ese servicio ya elegido. En celulares, los botones de cada paso quedan fijos abajo de la pantalla.
 - **Barra inferior en celulares** con Reservar · WhatsApp · Llamar. Se oculta cuando la sección de reservas está en pantalla.
 - **Contacto:** teléfono, email y "Cómo llegar" son links que se pueden tocar. Los datos del negocio (dirección, barrio, horario, redes) se editan en **Ajustes** del panel y deben coincidir con el perfil de Google del negocio.

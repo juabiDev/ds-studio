@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Más" };
 
 export default function MorePage() {
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-4">
+    <section className="flex max-w-2xl flex-col gap-4">
       <h1 className="text-xl font-semibold">Más</h1>
       <ul className="flex flex-col gap-2">
         {MORE_NAV.map(({ href, label, description, icon: Icon }) => (

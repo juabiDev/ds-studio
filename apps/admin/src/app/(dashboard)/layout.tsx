@@ -40,7 +40,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* Bottom padding keeps content clear of the mobile tab bar */}
-      <main className="mx-auto px-4 pt-5 md:px-6 md:pb-10">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 pt-5 md:px-6 md:pb-10">{children}</main>
 
       <div className="md:hidden">
         <AdminNav />

@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 
 import { searchCustomers, type CustomerHistory } from "@/lib/data/customers";
 import { fieldClass } from "@/lib/form-styles";
-import { formatDateKey, STATUS_LABEL, whatsappLink } from "@/lib/format";
+import { formatDateKey, formatPhone, plural, STATUS_LABEL, whatsappLink } from "@/lib/format";
 import { customerSearchSchema } from "@/lib/validation/admin";
 
 export const metadata: Metadata = { title: "Clientes" };
@@ -28,7 +28,7 @@ const CustomerCard = ({ customer: c }: { customer: CustomerHistory }) => {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium">{c.name}</p>
-          <p className="text-sm text-muted-foreground">{[c.phone, c.email].filter(Boolean).join(" · ") || "Sin contacto"}</p>
+          <p className="text-sm text-muted-foreground">{[c.phone && formatPhone(c.phone), c.email].filter(Boolean).join(" · ") || "Sin contacto"}</p>
         </div>
         {c.counts.NO_SHOW >= NO_SHOW_WARNING && (
           <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs text-amber-300">
@@ -38,10 +38,10 @@ const CustomerCard = ({ customer: c }: { customer: CustomerHistory }) => {
       </div>
 
       <p className="mt-2 text-sm">
-        {c.counts.COMPLETED} {c.counts.COMPLETED === 1 ? "visita" : "visitas"}
+        {plural(c.counts.COMPLETED, "visita", "visitas")}
         {visited > 0 && ` · faltó ${c.counts.NO_SHOW} de ${visited}`}
-        {c.counts.CANCELLED > 0 && ` · ${c.counts.CANCELLED} cancelados`}
-        {c.counts.CONFIRMED > 0 && ` · ${c.counts.CONFIRMED} próximos`}
+        {c.counts.CANCELLED > 0 && ` · ${plural(c.counts.CANCELLED, "cancelado", "cancelados")}`}
+        {c.counts.CONFIRMED > 0 && ` · ${plural(c.counts.CONFIRMED, "próximo", "próximos")}`}
       </p>
 
       {(c.phone || c.email) && (
@@ -97,7 +97,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   const customers = query.success ? await searchCustomers(query.data) : null;
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-5">
+    <section className="flex max-w-2xl flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Clientes</h1>
         <p className="text-sm text-muted-foreground">

@@ -19,6 +19,8 @@ interface DetailsStepProps {
   /** Cloudflare Turnstile site key; the bot check is skipped when null */
   turnstileSiteKey: string | null;
   turnstileToken: string | null;
+  /** Changes after a failed submit so the widget issues a new single-use token */
+  turnstileKey: number;
   onTurnstileToken: (token: string | null) => void;
   error: string | null;
   submitting: boolean;
@@ -67,6 +69,7 @@ export const DetailsStep = ({
   onWebsiteChange,
   turnstileSiteKey,
   turnstileToken,
+  turnstileKey,
   onTurnstileToken,
   error,
   submitting,
@@ -123,7 +126,7 @@ export const DetailsStep = ({
 
     <HoneypotField value={website} onChange={onWebsiteChange} />
 
-    {turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} onToken={onTurnstileToken} />}
+    {turnstileSiteKey && <TurnstileWidget key={turnstileKey} siteKey={turnstileSiteKey} onToken={onTurnstileToken} />}
 
     {error && (
       <p role="alert" className="mt-4 font-body text-sm text-red-300">
@@ -131,12 +134,17 @@ export const DetailsStep = ({
       </p>
     )}
 
+    {/* Express acceptance before confirming (Decreto 167/021) */}
     <p className="mt-4 font-body text-xs text-white/60">
-      Usamos tus datos solo para gestionar tu turno. Ver{" "}
+      Al confirmar aceptas los{" "}
+      <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-white">
+        términos y condiciones
+      </Link>
+      . Usamos tus datos solo para gestionar tu turno (
       <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
         política de privacidad
       </Link>
-      .
+      ).
     </p>
 
     <StepActions>

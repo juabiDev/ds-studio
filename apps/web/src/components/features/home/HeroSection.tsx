@@ -63,7 +63,7 @@ export const HeroSection = ({ hours, neighborhood, city }: HeroSectionProps) => 
             href="#agendar"
             className="inline-flex items-center justify-center gap-3 min-h-12 bg-white text-black font-condensed tracking-[0.25em] uppercase text-sm px-9 hover:bg-white/90 transition-all group"
           >
-            Agendar tu turno
+            Reserva tu turno
             <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </a>
           <a

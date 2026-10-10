@@ -33,7 +33,7 @@ export const NavBar = () => (
           href="#agendar"
           className="hidden md:inline-flex items-center gap-2 border border-white/70 text-white font-condensed tracking-[0.25em] uppercase text-xs px-6 py-2.5 hover:bg-white hover:text-black transition-all duration-200"
         >
-          Agendar
+          Reservar
         </a>
         <MobileMenu links={NAV_LINKS} />
       </div>

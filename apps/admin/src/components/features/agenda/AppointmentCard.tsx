@@ -12,7 +12,7 @@ import {
   type AgendaAppointment,
   type AgendaMessageKind,
 } from "@/lib/data/agenda";
-import { STATUS_LABEL, whatsappLink } from "@/lib/format";
+import { formatPhone, STATUS_LABEL, whatsappLink } from "@/lib/format";
 
 type Note = { label: string; className: string };
 
@@ -129,6 +129,16 @@ export const AppointmentCard = ({ appointment: a, showBarber = true }: Appointme
           {a.service.name}
           {showBarber && ` · ${a.employee.name}`} · {a.durationMinutes} min
         </p>
+        {/* Shown in full: while WhatsApp isn't active, calling is how staff reach the customer */}
+        {a.customerPhone && (
+          <a
+            href={`tel:${a.customerPhone}`}
+            className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <Phone size={13} className="shrink-0" />
+            <span className="tabular-nums">{formatPhone(a.customerPhone)}</span>
+          </a>
+        )}
         {a.customerEmail && (
           <a
             href={`mailto:${a.customerEmail}`}

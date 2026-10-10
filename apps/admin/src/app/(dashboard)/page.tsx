@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { agendaHref, newBookingHref } from "@/lib/agenda";
 import { type AgendaAppointment, type DayClosure, getDayAppointments, getDayClosures } from "@/lib/data/agenda";
 import { getActiveBarbers } from "@/lib/data/employees";
-import { formatDateKey } from "@/lib/format";
+import { formatDateKey, plural } from "@/lib/format";
 import { dateKeySchema } from "@/lib/validation/admin";
 import type { NamedOption } from "@/types/admin";
 
@@ -117,7 +117,7 @@ const BarberColumn = ({ barber, appointments }: { barber: NamedOption; appointme
   <div className="flex flex-col gap-3">
     <h2 className="flex items-baseline justify-between border-b border-border pb-2 font-medium">
       {barber.name}
-      <span className="text-sm font-normal text-muted-foreground">{countConfirmed(appointments)} confirmados</span>
+      <span className="text-sm font-normal text-muted-foreground">{plural(countConfirmed(appointments), "confirmado", "confirmados")}</span>
     </h2>
     {appointments.length === 0 ? (
       <EmptyState className="p-6 text-center text-sm">Sin turnos</EmptyState>

@@ -8,12 +8,11 @@ const secretsMatch = (given: string, expected: string) =>
   timingSafeEqual(createHash("sha256").update(given).digest(), createHash("sha256").update(expected).digest());
 
 /**
- * Cron endpoints require `Authorization: Bearer <CRON_SECRET>`. Returns the status to answer with
- * when the request isn't allowed, or null when it is. Without a secret the endpoints don't exist
- * (404), so they can never be triggered by accident.
+ * Internal endpoints (cron jobs, cache refresh from the admin) require `Authorization: Bearer <secret>`.
+ * Returns the status to answer with when the request isn't allowed, or null when it is. Without a
+ * configured secret the endpoint doesn't exist (404), so it can never be triggered by accident.
  */
-export const cronAuthFailure = (request: NextRequest): 401 | 404 | null => {
-  const secret = process.env.CRON_SECRET;
+export const bearerAuthFailure = (request: NextRequest, secret: string | undefined): 401 | 404 | null => {
   if (!secret) return 404;
 
   const given = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";

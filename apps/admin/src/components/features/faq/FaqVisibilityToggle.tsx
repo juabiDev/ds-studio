@@ -27,7 +27,7 @@ export const FaqVisibilityToggle = ({ visible, hasItems }: { visible: boolean; h
   const status = !checked
     ? "Oculta: la sección no aparece en el sitio."
     : hasItems
-      ? "Visible en el sitio (los cambios tardan hasta 5 minutos)."
+      ? "Visible en el sitio."
       : "Activada, pero no se muestra hasta que agregues una pregunta.";
 
   return (

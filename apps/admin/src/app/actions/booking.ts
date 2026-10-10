@@ -81,7 +81,7 @@ export const createAdminBooking = async (input: {
 
     // Phone bookings get the same WhatsApp confirmation (with cancel button) and email as online ones
     const { id } = result.appointment;
-    if (parsed.data.phone) after(() => sendBookingConfirmation(id));
+    after(() => sendBookingConfirmation(id));
     if (parsed.data.email) after(() => sendBookingConfirmationEmail(id));
   } catch (error) {
     console.error("[createAdminBooking]", error);

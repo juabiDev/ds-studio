@@ -7,6 +7,7 @@ import { StatTile, type StatDelta } from "@/components/features/stats/StatTile";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 import { getShopStats } from "@/lib/data/stats";
+import { plural } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Estadísticas" };
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function StatsPage() {
   const hasData = weekly.some((w) => w.count > 0);
 
   return (
-    <section className="mx-auto flex max-w-4xl flex-col gap-5">
+    <section className="flex max-w-4xl flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Estadísticas</h1>
         <p className="text-sm text-muted-foreground">
@@ -64,7 +65,7 @@ export default async function StatsPage() {
           label="Tasa de faltas"
           value={percent(current.noShowRate)}
           delta={rateDelta(current.noShowRate, previous.noShowRate, false)}
-          hint={`${current.noShows} de ${current.completed + current.noShows} turnos atendidos`}
+          hint={`${current.noShows} de ${plural(current.completed + current.noShows, "turno atendido", "turnos atendidos")}`}
         />
         <StatTile
           label="Reservas online"

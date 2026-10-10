@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireAdmin } from "@ds-studio/auth";
 import { prisma } from "@ds-studio/database";
 
 import { getUploadedImage } from "@/lib/cloudflare-images";
+import { refreshPublicSite } from "@/lib/refresh-public-site";
 import { moveInList } from "@/lib/reorder";
 import { firstIssue, galleryImageSchema, idSchema, moveSchema, newGalleryImageSchema } from "@/lib/validation/admin";
 import type { ActionResult } from "@/types/admin";
@@ -18,6 +20,12 @@ const orderedGalleryIds = async () => {
     select: { id: true },
   });
   return rows.map((r) => r.id);
+};
+
+// Admin screen now, public site right after the response
+const revalidate = () => {
+  revalidatePath("/galeria");
+  after(refreshPublicSite);
 };
 
 /** Step 2 of an upload: verifies the photo on Cloudflare and adds it to the end of the gallery. */
@@ -44,7 +52,7 @@ export const addGalleryImage = async (input: { imageId: string; category: string
     return { ok: false, error: "No se pudo guardar la foto." };
   }
 
-  revalidatePath("/galeria");
+  revalidate();
   return { ok: true };
 };
 
@@ -72,7 +80,7 @@ export const updateGalleryImage = async (input: { id: string; category: string; 
     return { ok: false, error: "No se pudo guardar la foto." };
   }
 
-  revalidatePath("/galeria");
+  revalidate();
   return { ok: true };
 };
 
@@ -92,7 +100,7 @@ export const moveGalleryImage = async (input: { id: string; direction: "up" | "d
     return { ok: false, error: "No se pudo mover la foto." };
   }
 
-  revalidatePath("/galeria");
+  revalidate();
   return { ok: true };
 };
 
@@ -110,6 +118,6 @@ export const deleteGalleryImage = async (input: { id: string }): Promise<ActionR
     return { ok: false, error: "No se pudo eliminar la foto." };
   }
 
-  revalidatePath("/galeria");
+  revalidate();
   return { ok: true };
 };

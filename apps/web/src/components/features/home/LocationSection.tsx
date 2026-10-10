@@ -53,7 +53,7 @@ export const LocationSection = ({ business }: { business: BusinessInfo }) => (
       <MapEmbed src={business.mapEmbedUrl} />
 
       <div className="bg-zinc-950 p-6 py-14 sm:p-10 lg:p-16 flex flex-col justify-center">
-        <p className="font-condensed text-accent text-xs tracking-[0.45em] uppercase mb-3">Encontranos</p>
+        <p className="font-condensed text-accent text-xs tracking-[0.45em] uppercase mb-3">Encuéntranos</p>
         <h2 className="font-display font-bold text-foreground text-3xl md:text-4xl mb-10">Ubicación & Contacto</h2>
 
         <div className="flex flex-col gap-8">

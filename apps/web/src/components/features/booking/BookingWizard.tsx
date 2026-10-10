@@ -44,6 +44,8 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
   const [slotNotice, setSlotNotice] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Cloudflare accepts each token once: bumping the key remounts the widget for a fresh one
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const onTurnstileToken = useCallback((token: string | null) => setTurnstileToken(token), []);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null);
@@ -66,7 +68,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
     setStep(2);
   };
 
-  // "Agendar" buttons elsewhere on the page jump straight to picking a time
+  // "Reservar" buttons elsewhere on the page jump straight to picking a time
   useEffect(() => {
     const onSelect = (event: Event) => goToSchedule((event as SelectServiceEvent).detail.serviceId);
     window.addEventListener(SELECT_SERVICE_EVENT, onSelect);
@@ -127,8 +129,12 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
     });
 
     setSubmitting(false);
+    setTurnstileToken(null);
     if (result.ok) setConfirmed(result.booking);
-    else setError(result.error);
+    else {
+      setError(result.error);
+      setTurnstileKey((k) => k + 1);
+    }
   };
 
   const reset = () => {
@@ -207,6 +213,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
           onWebsiteChange={setWebsite}
           turnstileSiteKey={turnstileSiteKey}
           turnstileToken={turnstileToken}
+          turnstileKey={turnstileKey}
           onTurnstileToken={onTurnstileToken}
           error={error}
           submitting={submitting}

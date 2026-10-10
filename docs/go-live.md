@@ -22,6 +22,11 @@ están hechos. Marca cada casilla al terminarla.
 
 ## 0. Código
 
+- [ ] Completar los datos legales del local en
+  [`apps/web/src/lib/site-config.ts`](../apps/web/src/lib/site-config.ts) (`LEGAL_ENTITY`): **razón
+  social** y **RUT**. Aparecen en Términos y condiciones y en la Política de privacidad, como pide el
+  Decreto 167/021 (comercio electrónico). Mientras no se completen, el sitio muestra `[RAZÓN SOCIAL]`
+  y `[RUT]`.
 - [ ] Revisar y aprobar el pull request de `feature/monorepo-gallery-settings` y hacer merge a `main`.
 - [ ] Confirmar que Railway despliega desde `main`.
 
@@ -57,6 +62,7 @@ Donde dice "mismo valor", copia exactamente el mismo texto en los dos servicios.
 | `IP_HASH_SALT` | secreto nuevo |
 | `BOOKING_LINK_SECRET` | secreto nuevo (**mismo valor** en `admin`) |
 | `CRON_SECRET` | secreto nuevo (**mismo valor** en `reminders`) |
+| `REVALIDATE_SECRET` | secreto nuevo (**mismo valor** en `admin`): el panel actualiza el sitio al instante |
 | `RESEND_API_KEY` | clave de Resend (paso 5) |
 | `BOOKING_EMAIL_FROM` | `contacto@dsstudio.com.uy` |
 | `BOOKING_NOTIFY_EMAIL` | email (o emails separados por coma) donde el local recibe cada reserva |
@@ -71,6 +77,7 @@ Donde dice "mismo valor", copia exactamente el mismo texto en los dos servicios.
 | `BETTER_AUTH_SECRET` | secreto nuevo (solo admin) |
 | `BETTER_AUTH_URL` | `https://admin.dsstudio.com.uy` |
 | `BOOKING_LINK_SECRET` | **mismo valor** que en `web` |
+| `REVALIDATE_SECRET` | **mismo valor** que en `web` |
 | `RESEND_API_KEY` / `BOOKING_EMAIL_FROM` | iguales que en `web` |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_IMAGES_API_TOKEN` | del paso 7 |
 
@@ -158,6 +165,8 @@ Donde dice "mismo valor", copia exactamente el mismo texto en los dos servicios.
 - [ ] **Cierres:** cargar los próximos feriados y vacaciones.
 - [ ] **Galería:** agregar fotos reales de cortes y ordenarlas.
 - [ ] **Preguntas frecuentes:** revisar las 5 preguntas iniciales (o apagar la sección).
+- [ ] Leer `/terminos` y `/privacidad` en el sitio y confirmar que todo es correcto (tolerancia de 10
+  minutos, cancelación hasta 2 horas antes, precios con IVA, medios de pago).
 
 ## 9. Prueba completa en producción
 
@@ -170,6 +179,8 @@ Donde dice "mismo valor", copia exactamente el mismo texto en los dos servicios.
   - [ ] el botón "Cancelar turno" del email lleva a la página de cancelación y funciona.
 - [ ] Probar el recordatorio a mano (solo envía a quienes tienen turno hoy y todavía no lo recibieron):
   `curl -X POST -H "Authorization: Bearer <CRON_SECRET>" https://www.dsstudio.com.uy/api/cron/reminders`
+- [ ] Cambiar el precio de un servicio en el panel y confirmar que el sitio lo muestra enseguida
+  (si tarda unos 5 minutos, falta `REVALIDATE_SECRET` en `web` o en `admin`).
 - [ ] Compartir el link del sitio por WhatsApp y confirmar que aparece la vista previa con imagen.
 - [ ] Cancelar el turno de prueba desde la Agenda del panel.
 

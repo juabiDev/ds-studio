@@ -39,6 +39,13 @@ export const dateKeyToDbDate = (key: string) => new Date(`${key}T00:00:00.000Z`)
 
 export const dbDateToKey = (date: Date) => date.toISOString().slice(0, 10);
 
+/** A real calendar day as "YYYY-MM-DD": rejects shapes like "2026-13-01" or "2026-02-30". */
+export const isValidDateKey = (key: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return false;
+  const date = dateKeyToDbDate(key);
+  return !Number.isNaN(date.getTime()) && dbDateToKey(date) === key;
+};
+
 export const weekdayOfKey = (key: string): DayOfWeek => WEEKDAYS[dateKeyToDbDate(key).getUTCDay()];
 
 export const timeToMinutes = (time: string) => {

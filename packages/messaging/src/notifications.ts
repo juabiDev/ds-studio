@@ -8,6 +8,9 @@ import { firstName, formatLongDate, templateParam } from "./format";
 import { buttonPayload, createActionToken } from "./tokens";
 import { sendTemplate, type SendResult } from "./whatsapp-client";
 
+/** True once every WhatsApp credential is set; pages use it to mention WhatsApp messages only when they exist. */
+export const isWhatsAppConfigured = () => getWhatsAppConfig() !== null;
+
 /** Template names as approved in WhatsApp Manager (see packages/messaging/TEMPLATES.md). */
 export const TEMPLATES = {
   bookingConfirmation: "reserva_confirmada",

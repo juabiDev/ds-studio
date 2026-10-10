@@ -19,7 +19,7 @@ export default async function BarberPage({ params }: { params: Promise<{ id: str
   if (!barber) notFound();
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-5">
+    <section className="flex max-w-2xl flex-col gap-5">
       <div>
         <Link href="/barberos" className="-ml-2 inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft size={16} /> Barberos

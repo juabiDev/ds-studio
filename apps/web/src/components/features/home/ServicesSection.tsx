@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/features/home/SectionHeading";
 
 import type { ServiceOption } from "@/types/booking";
 
-// Server-rendered card; only the "Agendar" button is a client island
+// Server-rendered card; only the "Reservar" button is a client island
 const ServiceCard = ({ service, index }: { service: ServiceOption; index: number }) => (
   <div className="border border-white/10 bg-card p-6 md:p-8 hover:border-white/25 transition-all duration-300 group">
     <div className="flex items-start justify-between mb-5">

@@ -51,10 +51,23 @@ export const setDayAvailability = async (input: {
   const { employeeId, day, available } = parsed.data;
 
   try {
-    await prisma.employeeAvailability.updateMany({
-      where: { employeeId, availability: { day, date: null, deletedAt: null } },
-      data: { available },
+    // Same as setSlotAvailability but for the whole day: create the missing assignments, then
+    // set every one, so slots never assigned to this barber are covered too
+    const slots = await prisma.availability.findMany({
+      where: { day, date: null, deletedAt: null },
+      select: { id: true },
     });
+    const availabilityIds = slots.map((s) => s.id);
+    await prisma.$transaction([
+      prisma.employeeAvailability.createMany({
+        data: availabilityIds.map((availabilityId) => ({ employeeId, availabilityId, available })),
+        skipDuplicates: true,
+      }),
+      prisma.employeeAvailability.updateMany({
+        where: { employeeId, availabilityId: { in: availabilityIds } },
+        data: { available },
+      }),
+    ]);
   } catch (error) {
     console.error("[setDayAvailability]", error);
     return { ok: false, error: "No se pudo guardar el cambio." };

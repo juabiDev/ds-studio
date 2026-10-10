@@ -23,7 +23,7 @@ export const BarberProfileForm = ({ barber }: { barber: BarberProfile }) => {
     setStatus(null);
     const result = await updateBarberProfile({ employeeId: barber.id, name, role, specialty, experience });
     setSaving(false);
-    setStatus(result.ok ? { ok: true, message: "Guardado. El sitio se actualiza en hasta 5 minutos." } : { ok: false, message: result.error });
+    setStatus(result.ok ? { ok: true, message: "Guardado. El sitio ya muestra los cambios." } : { ok: false, message: result.error });
   };
 
   return (

@@ -14,11 +14,11 @@ export default async function GalleryPage() {
   const { photos, categories } = await getGalleryForAdmin();
 
   return (
-    <section className="mx-auto flex max-w-3xl flex-col gap-5">
+    <section className="flex max-w-3xl flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Galería</h1>
         <p className="text-sm text-muted-foreground">
-          Fotos del sitio, en el orden en que se muestran. Los cambios se ven en hasta 5 minutos.
+          Fotos del sitio, en el orden en que se muestran. Los cambios se ven en el sitio enseguida.
         </p>
       </div>
 

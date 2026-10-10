@@ -14,7 +14,7 @@ export default async function FaqPage() {
   const { items, visible } = await getFaqForAdmin();
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-5">
+    <section className="flex max-w-2xl flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Preguntas frecuentes</h1>
         <p className="text-sm text-muted-foreground">Las preguntas que aparecen en el sitio, en este orden.</p>

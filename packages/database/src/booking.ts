@@ -43,7 +43,10 @@ interface FindOpenSlotsOptions {
   dateKey: string;
   durationMinutes: number;
   employeeId: string | null;
-  /** Online bookings need SAME_DAY_LEAD_MINUTES of notice; staff can record walk-ins right now. */
+  /**
+   * Online bookings need SAME_DAY_LEAD_MINUTES of notice. Staff can record a walk-in in the slot
+   * that just started, but never an earlier one.
+   */
   enforceLeadTime?: boolean;
 }
 
@@ -89,9 +92,13 @@ export const findOpenSlots = async (
     appointments,
     closedEmployeeIds: closures.map((c) => c.employeeId),
     durationMinutes,
-    cutoffMinutes: enforceLeadTime && dateKey === toShopDateKey() ? shopNowMinutes() + SAME_DAY_LEAD_MINUTES : -1,
+    cutoffMinutes: dateKey === toShopDateKey() ? todayCutoff(enforceLeadTime) : -1,
   });
 };
+
+/** Earliest start time (minutes) still bookable today. */
+const todayCutoff = (enforceLeadTime: boolean) =>
+  enforceLeadTime ? shopNowMinutes() + SAME_DAY_LEAD_MINUTES : shopNowMinutes() - SLOT_MINUTES + 1;
 
 interface ComputeOpenSlotsInput {
   /** Open (barber, time) slots for one day */
@@ -275,7 +282,7 @@ export const bookAppointment = async (
           if (!service) return { ok: false, reason: "SERVICE_NOT_FOUND" };
 
           if (isOnline && phone) {
-            const upcoming = await tx.appointment.findMany({
+            const booked = await tx.appointment.findMany({
               where: {
                 customerPhone: phone,
                 source: "ONLINE",
@@ -285,6 +292,10 @@ export const bookAppointment = async (
               },
               select: { date: true, time: true },
             });
+            // Earlier turns today that staff haven't marked yet don't count: they already happened
+            const upcoming = booked.filter(
+              (a) => a.date.getTime() > dateKeyToDbDate(toShopDateKey()).getTime() || timeToMinutes(a.time) > shopNowMinutes(),
+            );
             const sameDay = upcoming.some((a) => a.date.getTime() === dateKeyToDbDate(input.dateKey).getTime());
             if (sameDay) return { ok: false, reason: "DUPLICATE" };
             if (upcoming.length >= MAX_ACTIVE_BOOKINGS_PER_PHONE) return { ok: false, reason: "PHONE_LIMIT" };

@@ -39,7 +39,7 @@ export const MobileMenu = ({ links }: { links: NavLink[] }) => {
             onClick={close}
             className="mt-4 border border-white/70 text-white font-condensed tracking-[0.25em] uppercase text-xs px-6 py-4 text-center hover:bg-white hover:text-black transition-all"
           >
-            Agendar turno
+            Reservar turno
           </a>
         </div>
       )}

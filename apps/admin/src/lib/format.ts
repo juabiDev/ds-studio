@@ -21,6 +21,19 @@ export const formatDateKey = (key: string) => {
   return `${DAY_NAMES[d.getUTCDay()]} ${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]}`;
 };
 
+/** "1 turno" / "3 turnos" */
+export const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+/**
+ * Uruguayan numbers stored as E.164 shown the way people dial them locally:
+ * "+59898765432" → "098 765 432", "+59824001234" → "2400 1234". Anything else is shown as stored.
+ */
+export const formatPhone = (phone: string) => {
+  const local = /^\+598(\d{8})$/.exec(phone)?.[1];
+  if (!local) return phone;
+  return local.startsWith("9") ? `0${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}` : `${local.slice(0, 4)} ${local.slice(4)}`;
+};
+
 /** wa.me wants the international number without "+"; phones are stored normalized (E.164). */
 export const whatsappLink = (phone: string) => `https://wa.me/${normalizePhone(phone).replace("+", "")}`;
 

@@ -95,7 +95,7 @@ export const ServiceForm = ({ idPrefix, initial, submitLabel, onSubmit, onSaved,
         </div>
       </div>
       <p className={cn(hintClass, "-mt-2")}>
-        Deja el precio vacío para mostrar «Consultar». Los cambios se ven en el sitio en hasta 5 minutos.
+        Deja el precio vacío para mostrar «Consultar». Los cambios se ven en el sitio enseguida.
       </p>
 
       {error && <p role="alert" className="text-sm text-red-300">{error}</p>}

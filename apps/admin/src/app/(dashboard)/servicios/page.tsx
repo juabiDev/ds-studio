@@ -15,7 +15,7 @@ export default async function ServicesPage() {
   const services = await getServicesForAdmin();
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-5">
+    <section className="flex max-w-2xl flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Servicios</h1>
         <p className="text-sm text-muted-foreground">Lo que se muestra en el sitio y se puede reservar, con su duración y precio.</p>
