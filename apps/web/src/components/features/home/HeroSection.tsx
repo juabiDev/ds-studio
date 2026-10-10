@@ -6,7 +6,15 @@ import type { OpeningHoursByDay } from "@ds-studio/database/settings";
 
 import { OpenStatus } from "@/components/features/home/OpenStatus";
 
-export const HeroSection = ({ hours }: { hours: OpeningHoursByDay }) => {
+import { FOUNDING_YEAR, localKeyword } from "@/lib/site-config";
+
+interface HeroSectionProps {
+  hours: OpeningHoursByDay;
+  neighborhood: string | null;
+  city: string;
+}
+
+export const HeroSection = ({ hours, neighborhood, city }: HeroSectionProps) => {
   return (
     // svh: stays stable while mobile browser toolbars show/hide
     <section id="inicio" className="relative min-h-svh flex items-end pb-16 md:pb-20 overflow-hidden">
@@ -29,20 +37,25 @@ export const HeroSection = ({ hours }: { hours: OpeningHoursByDay }) => {
       <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
         <div className="flex items-center gap-4 mb-5">
           <div className="w-8 h-px bg-white/40" />
-          <p className="font-condensed text-white/70 tracking-[0.35em] uppercase text-xs">Montevideo · Uruguay · Est. 2018</p>
+          {/* The page's only h1: the phrase people search ("Barbería en Centro, Montevideo"); the
+              big slogan below is styled text, so headings stay meaningful for search engines */}
+          <h1 className="font-condensed text-white/70 tracking-[0.35em] uppercase text-xs">
+            {localKeyword(neighborhood, city)} <span aria-hidden="true">·</span> Est. {FOUNDING_YEAR}
+          </h1>
         </div>
         <div className="mb-6 min-h-5">
           <OpenStatus hours={hours} />
         </div>
 
-        <h1 className="font-display font-bold text-white leading-[0.92] mb-7 text-[clamp(3.2rem,10vw,9rem)]">
+        <p className="font-display font-bold text-white leading-[0.92] mb-7 text-[clamp(3.2rem,10vw,9rem)]">
           El Arte del
           <br />
           <span className="text-transparent [-webkit-text-stroke:1.5px_rgba(255,255,255,0.75)]">Corte Perfecto</span>
-        </h1>
+        </p>
 
         <p className="font-body text-white/75 text-base md:text-lg mb-9 max-w-sm leading-relaxed">
-          Barbería urbana de precisión. Donde el estilo clásico se encuentra con la cultura contemporánea.
+          Barbería urbana de precisión en {neighborhood ? `${neighborhood}, ` : ""}{city}. Donde el estilo clásico se
+          encuentra con la cultura contemporánea.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">

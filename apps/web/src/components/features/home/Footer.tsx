@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Facebook, Instagram } from "lucide-react";
 
 import { NAV_LINKS } from "@/lib/home-content";
@@ -52,6 +54,12 @@ export const Footer = ({ instagramUrl, facebookUrl }: FooterProps) => (
         <p className="font-condensed text-white/50 text-xs tracking-[0.2em]">
           © {new Date().getFullYear()} DS STUDIO — Barbería Montevideo. Todos los derechos reservados.
         </p>
+        <Link
+          href="/privacidad"
+          className="inline-flex items-center min-h-11 font-condensed text-white/50 hover:text-white text-xs tracking-[0.2em] transition-colors"
+        >
+          Política de privacidad
+        </Link>
       </div>
     </div>
   </footer>

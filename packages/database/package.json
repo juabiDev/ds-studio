@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./dates": "./src/dates.ts",
     "./booking": "./src/booking.ts",
+    "./client-ip": "./src/client-ip.ts",
     "./phone": "./src/phone.ts",
+    "./retention": "./src/retention.ts",
     "./client": "./src/generated/prisma/client.ts",
     "./settings": "./src/settings.ts",
     "./settings-store": "./src/settings-store.ts"

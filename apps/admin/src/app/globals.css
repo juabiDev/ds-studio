@@ -1,2 +1,7 @@
 @import "@ds-studio/ui/styles.css";
 @source "../";
+
+/* Single-series chart hue for the stats page; validated (dataviz) against the dark card surface #161616 */
+@theme {
+  --color-chart-bar: #5b8fd6;
+}

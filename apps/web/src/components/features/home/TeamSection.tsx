@@ -10,7 +10,7 @@ const BarberCard = ({ barber }: { barber: BarberOption }) => (
       {barber.photoUrl && (
         <Image
           src={barber.photoUrl}
-          alt={barber.name}
+          alt={`${barber.name}, ${barber.role.toLowerCase()} en DS STUDIO`}
           fill
           sizes="(min-width: 1024px) 25vw, 50vw"
           // Color on mobile (no hover); grayscale-until-hover only where hover exists
@@ -33,7 +33,7 @@ export const TeamSection = ({ barbers }: { barbers: BarberOption[] }) => {
   return (
     <section id="equipo" className="py-20 md:py-24 bg-zinc-950">
       <div className="max-w-7xl mx-auto px-6">
-        <SectionHeading eyebrow="Conocé al equipo" title="Nuestros barberos" />
+        <SectionHeading eyebrow="Conoce al equipo" title="Nuestros barberos" />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
           {barbers.map((member) => (

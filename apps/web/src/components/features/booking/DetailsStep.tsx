@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Check } from "lucide-react";
 
 import { StepActions } from "@/components/features/booking/StepActions";
@@ -128,6 +130,14 @@ export const DetailsStep = ({
         {error}
       </p>
     )}
+
+    <p className="mt-4 font-body text-xs text-white/60">
+      Usamos tus datos solo para gestionar tu turno. Ver{" "}
+      <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-white">
+        política de privacidad
+      </Link>
+      .
+    </p>
 
     <StepActions>
       <button type="button" onClick={onBack} className={secondaryButton}>

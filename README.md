@@ -34,6 +34,9 @@ Diseño original en Figma: https://www.figma.com/design/2lfePeOFa0BmF5MEiGNCua/L
 |---|---|
 | Sitio público (landing + reservas reales) | ✅ Hecho y probado |
 | Panel admin (agenda, horarios, cierres, barberos, turnos por teléfono) | ✅ Hecho y probado |
+| Panel admin: servicios, galería con subida de fotos, preguntas frecuentes, clientes, estadísticas | ✅ Hecho y probado |
+| Privacidad (Ley 18.331): página `/privacidad` y anonimización automática a los 12 meses | ✅ Hecho |
+| SEO local: título y `h1` con el barrio, datos estructurados, sitemap, imagen para compartir | ✅ Hecho (indexación apagada hasta el lanzamiento) |
 | Login de administradores (Better Auth) | ✅ Hecho y probado |
 | Protección anti-spam de reservas | ✅ Hecho y probado |
 | WhatsApp: confirmación, confirmar asistencia, cancelar | ✅ Hecho, probado contra un **simulador** de Meta |
@@ -43,7 +46,9 @@ Diseño original en Figma: https://www.figma.com/design/2lfePeOFa0BmF5MEiGNCua/L
 | Recordatorios por WhatsApp (día anterior / 2 h antes) | ⏳ Pendiente |
 | Email marketing | ⏳ Pendiente (a futuro) |
 
-**Nunca se probó contra servicios reales**: Railway, Meta (WhatsApp), Resend ni Cloudflare Turnstile. Todo se probó en local con PostgreSQL real y un servidor falso que imita la API de Meta. Nada está commiteado todavía.
+**Todavía no se probó contra servicios reales**: Railway, Meta (WhatsApp), Resend, Cloudflare Turnstile ni Cloudflare Images. Todo se probó en local con PostgreSQL real y builds de producción (ver [Pruebas](#15-pruebas)).
+
+**Para salir a producción, sigue [`docs/go-live.md`](docs/go-live.md).** Las mejoras de SEO pendientes están en [`docs/seo-roadmap.md`](docs/seo-roadmap.md).
 
 ---
 
@@ -104,13 +109,16 @@ npm run dev                   # web en :3000, admin en :3001
 | `DATABASE_URL` | ambas + CLI | ✅ | PostgreSQL de Railway. En local, `DATABASE_PUBLIC_URL`; dentro de Railway, `${{Postgres.DATABASE_URL}}` |
 | `BETTER_AUTH_SECRET` | admin | ✅ | Mínimo 32 caracteres aleatorios (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | admin | ✅ | URL pública del admin |
-| `NEXT_PUBLIC_SITE_URL` | ambas | Recomendada | URL del sitio público (SEO y link en los mensajes de WhatsApp) |
+| `NEXT_PUBLIC_SITE_URL` | ambas + cron | ✅ en producción | URL del sitio público (`https://www.dsstudio.com.uy`): SEO, links de los emails y de WhatsApp. **Se lee al compilar** |
+| `SITE_INDEXING` | web | Al lanzar | `on` permite que Google indexe el sitio (`robots.txt` y meta `robots`). Vacía = no indexar. **Se lee al compilar** |
+| `CLIENT_IP_HEADER` | ambas | ❌ No usar hoy | Header con la IP real del cliente. Por defecto `x-real-ip` (Railway). Solo cambia si se pone el proxy de Cloudflare delante |
+| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_IMAGES_API_TOKEN` | admin | Para fotos | Subida de fotos de galería y barberos a Cloudflare Images. Sin estas variables, el panel explica que falta configurarlo |
 | `IP_HASH_SALT` | web | Recomendada | Se mezcla con las IPs antes de guardarlas hasheadas |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | web | Opcional | Control anti-bots de Cloudflare. Sin estas variables, no se usa |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | web | Recomendada | Control anti-bots de Cloudflare. Sin estas variables no se usa y cada reserva deja un error en el log |
 | `RESEND_API_KEY`, `BOOKING_EMAIL_FROM` | ambas | Opcional | Emails al cliente (confirmación y recordatorio). Sin estas variables, solo se escribe en el log |
 | `BOOKING_NOTIFY_EMAIL` | web | Opcional | Email al local por cada reserva/cancelación |
 | `BOOKING_LINK_SECRET` | ambas | Recomendada | Firma el link "Cancelar turno" de los emails (mismo valor en web y admin). Sin esta variable, los emails salen sin ese botón |
-| `CRON_SECRET` | web + cron | Para recordatorios | Protege `/api/cron/reminders`. Sin esta variable el endpoint responde 404 |
+| `CRON_SECRET` | web + cron | Para el cron diario | Protege `/api/cron/reminders` y `/api/cron/retention`. Sin esta variable responden 404 |
 | `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | ambas | Opcional | WhatsApp. Si falta alguna, no se envía nada y el webhook responde 404 |
 | `WHATSAPP_GRAPH_VERSION` | ambas | Opcional | Por defecto `v26.0` |
 | `WHATSAPP_TEMPLATE_LANGUAGE` | ambas | Opcional | Por defecto `es` |
@@ -196,16 +204,17 @@ Las reservas online se pueden hacer desde hoy hasta 14 días adelante.
 - **Servicios y barberos vienen de la base de datos.** La página es estática y se regenera cada 5 minutos. **El build necesita `DATABASE_URL`.**
 - **Wizard de reserva en 3 pasos:** Servicio → Horario (barbero, fecha y hora) → Datos (nombre y teléfono). Tocar un servicio lleva directo al paso 2, y "Agendar →" en una tarjeta de servicio abre el wizard con ese servicio ya elegido. En celulares, los botones de cada paso quedan fijos abajo de la pantalla.
 - **Barra inferior en celulares** con Reservar · WhatsApp · Llamar. Se oculta cuando la sección de reservas está en pantalla.
-- **Contacto:** teléfono, email y "Cómo llegar" son links que se pueden tocar. Los datos del negocio están en [`site-config.ts`](apps/web/src/lib/site-config.ts) y deben coincidir con el perfil de Google del negocio.
+- **Contacto:** teléfono, email y "Cómo llegar" son links que se pueden tocar. Los datos del negocio (dirección, barrio, horario, redes) se editan en **Ajustes** del panel y deben coincidir con el perfil de Google del negocio.
 - **Otros detalles:** badge "Abierto ahora · cierra 20:00", imágenes con `next/image`, fuentes con `next/font`, mapa con carga diferida y datos estructurados `HairSalon` (JSON-LD) para Google.
-- **Endpoints:** `GET /api/availability` (horarios libres) y `/api/whatsapp/webhook` (Meta).
-- ⚠️ El sitio tiene `robots: index: false` en el layout: **hay que cambiarlo al lanzar**.
+- **Preguntas frecuentes** desde la base de datos; si se apagan en el panel o no hay preguntas, la sección no aparece.
+- **Endpoints:** `GET /api/availability` (horarios libres, con límite por IP), `/api/whatsapp/webhook` (Meta) y `/api/cron/reminders` y `/api/cron/retention` (cron diario).
+- La indexación depende de `SITE_INDEXING`: apagada hasta el lanzamiento (paso 10 de [`docs/go-live.md`](docs/go-live.md)).
 
 ---
 
 ## 9. Panel de administración
 
-`apps/admin`. En celulares tiene barra de navegación abajo; en escritorio, pestañas arriba.
+`apps/admin`. En celulares tiene barra de navegación abajo (Agenda, Horarios, Cierres, Clientes y **Más**); en escritorio, pestañas arriba. Las pantallas de uso ocasional están en **Más**.
 
 | Pantalla | Qué permite |
 |---|---|
@@ -213,7 +222,13 @@ Las reservas online se pueden hacer desde hoy hasta 14 días adelante.
 | **Nuevo turno** (`/turnos/nuevo`) | Cargar turnos por teléfono o de clientes que llegan sin reserva. El teléfono es opcional; si se carga, el cliente recibe la confirmación por WhatsApp |
 | **Horarios** (`/horarios`) | Elegir barbero y día, y tocar cada horario para bloquearlo o habilitarlo. También bloquear o habilitar el día entero. La opción **"Todo el local"** abre o cierra un horario para todos los barberos |
 | **Cierres** (`/cierres`) | Feriados del local o días libres de un barbero (desde/hasta). Muestra cuántos turnos ya reservados quedan afectados |
-| **Barberos** (`/barberos`) | Lista con horarios disponibles y bloqueados |
+| **Clientes** (`/clientes`) | Buscar por teléfono o nombre: visitas, faltas, cancelaciones y contacto |
+| **Barberos** (`/barberos`, `/barberos/[id]`) | Lista con horarios; editar nombre, rol, especialidad, experiencia y foto |
+| **Servicios** (`/servicios`) | Crear, editar (nombre, duración, precio) y eliminar servicios |
+| **Galería** (`/galeria`) | Subir fotos a Cloudflare Images, categoría, descripción, orden y eliminar |
+| **Preguntas frecuentes** (`/preguntas`) | Mostrar u ocultar la sección, crear, editar, ordenar y eliminar preguntas |
+| **Estadísticas** (`/estadisticas`) | Turnos, ingresos estimados, tasa de faltas y reservas online de los últimos 30 días; días y horarios más pedidos |
+| **Ajustes** (`/ajustes`) | Contacto, dirección, barrio, código postal, coordenadas, redes y horario de atención |
 
 Cada acción del admin verifica la sesión y el rol (`requireAdmin()`) y valida los datos con Zod.
 
@@ -292,11 +307,13 @@ Cada acción del admin verifica la sesión y el rol (`requireAdmin()`) y valida 
 | Token de WhatsApp filtrado | Permiso mínimo + `appsecret_proof` con "Require App Secret" (verificar con Meta real) |
 | Errores internos expuestos | Mensajes genéricos al usuario; el detalle solo va al log del servidor |
 
-**Limitación conocida:** el límite por IP se puede evadir si el hosting deja que el cliente defina el header `X-Forwarded-For`. La protección real es el límite por teléfono más Turnstile.
+**IP del cliente:** se toma de `x-real-ip`, que el borde de Railway siempre reescribe. `X-Forwarded-For` (que el cliente puede falsificar) solo se usa en desarrollo. También hay encabezados de seguridad en las dos apps (CSP, HSTS, `frame-ancestors 'none'`) y el admin responde `X-Robots-Tag: noindex`.
 
 ---
 
 ## 14. Deploy en Railway
+
+> El paso a paso completo de la salida (dominios, DNS, Resend, Turnstile, Cloudflare Images y contenido) está en [`docs/go-live.md`](docs/go-live.md).
 
 Dos servicios desde este repo, más una base PostgreSQL:
 
@@ -316,12 +333,12 @@ Dos servicios desde este repo, más una base PostgreSQL:
 
 | Servicio | Cron schedule | Start | Variables |
 |---|---|---|---|
-| reminders | `0 11 * * *` (Railway usa UTC: 11:00 UTC = 08:00 en Montevideo) | `npm run cron:reminders` | `NEXT_PUBLIC_SITE_URL`, `CRON_SECRET` (el mismo que en web) |
+| reminders | `0 11 * * *` (Railway usa UTC: 11:00 UTC = 08:00 en Montevideo) | `npm run cron:reminders` (build: `echo "sin build"`) | `NEXT_PUBLIC_SITE_URL`, `CRON_SECRET` (el mismo que en web) |
 
-El servicio solo llama a `POST /api/cron/reminders` del sitio y termina. Para probarlo a mano:
+El servicio llama a `POST /api/cron/reminders` (recordatorios del día) y a `POST /api/cron/retention` (anonimiza datos de clientes de más de 12 meses) y termina. Para probarlo a mano:
 `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<sitio>/api/cron/reminders`.
 
-**Primera vez:** `db:deploy` → `db:seed` → `auth:create-admin`.
+**Primera vez:** `db:deploy` → `db:seed` → `auth:create-admin`. ⚠️ El seed se corre **una sola vez**: si se repite, pisa los servicios, barberos y la galería editados en el panel.
 
 ---
 
@@ -376,12 +393,8 @@ No hay tests automáticos en el repo, salvo el stress test. Lo siguiente se prob
 ## 17. Pendientes
 
 **Para lanzar**
-- [ ] Crear el proyecto en Railway, cargar las variables y correr `db:deploy`, `db:seed` y `auth:create-admin`.
-- [ ] Reemplazar el dominio `dsstudio.example.com` (`NEXT_PUBLIC_SITE_URL`) y cambiar `robots: index: false`.
-- [ ] Configurar WhatsApp (sección 11) y hacer una prueba real.
-- [ ] Configurar Resend (clave de solo envío + subdominio) y DMARC en el dominio.
-- [ ] Opcional: activar Turnstile y definir `IP_HASH_SALT`.
-- [ ] Revisar y commitear los cambios.
+- [ ] Seguir [`docs/go-live.md`](docs/go-live.md) (Railway, dominios, Resend, Turnstile, Cloudflare Images, contenido y prueba completa).
+- [ ] Configurar WhatsApp (sección 11) después del lanzamiento, volviendo a enviar a Meta las plantillas en "tú".
 - [ ] Eliminar, si no los quieren, `.agents/`, `.windsurf/`, `.claude/skills/` y `skills-lock.json`, que agregó `prisma init`.
 
 **Contenido real necesario**
@@ -393,10 +406,9 @@ No hay tests automáticos en el repo, salvo el stress test. Lo siguiente se prob
 **Próximas funcionalidades**
 - [ ] Recordatorios por WhatsApp el día anterior y 2 horas antes (el cron de emails ya existe y se puede reutilizar).
 - [ ] Pasar las plantillas de email a Resend.
-- [ ] Pantallas del admin para gestionar servicios, barberos y fotos.
 - [ ] Email marketing con consentimiento.
-- [ ] Tests unitarios de `findOpenSlots` y configuración de ESLint.
-- [ ] Usar `cn()` en las clases condicionales, como piden las reglas del proyecto.
+- [ ] Tests unitarios de `findOpenSlots`.
+- [ ] Mejoras de SEO: ver [`docs/seo-roadmap.md`](docs/seo-roadmap.md).
 
 ---
 

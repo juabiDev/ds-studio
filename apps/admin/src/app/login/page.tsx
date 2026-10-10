@@ -40,7 +40,7 @@ export default function LoginPage() {
             <h1 className="mt-6 font-condensed text-sm font-medium uppercase tracking-[0.35em] text-accent lg:mt-0">
               Iniciar sesión
             </h1>
-            <p className="mt-2 text-muted-foreground">Ingresá con tu cuenta de administrador.</p>
+            <p className="mt-2 text-muted-foreground">Ingresa con tu cuenta de administrador.</p>
           </div>
 
           <LoginForm />

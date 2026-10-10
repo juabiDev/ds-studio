@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { CalendarDays, CalendarOff, Clock, Settings, Users } from "lucide-react";
-
 import { cn } from "@ds-studio/ui/utils";
-const ITEMS = [
-  { href: "/", label: "Agenda", icon: CalendarDays },
-  { href: "/horarios", label: "Horarios", icon: Clock },
-  { href: "/cierres", label: "Cierres", icon: CalendarOff },
-  { href: "/barberos", label: "Barberos", icon: Users },
-  { href: "/ajustes", label: "Ajustes", icon: Settings },
-];
+
+import { MORE_ITEM, MORE_NAV, PRIMARY_NAV } from "@/lib/navigation";
+
+const isActive = (href: string, pathname: string) => {
+  // New-booking form lives under /turnos but belongs to the Agenda tab
+  if (href === "/") return pathname === "/" || pathname.startsWith("/turnos");
+  // "Más" stays highlighted on every screen it lists
+  if (href === MORE_ITEM.href) return pathname.startsWith(MORE_ITEM.href) || MORE_NAV.some((i) => pathname.startsWith(i.href));
+  return pathname.startsWith(href);
+};
 
 // Bottom tab bar on mobile (thumb zone), inline tabs in the header on desktop.
 export const AdminNav = () => {
@@ -21,9 +22,8 @@ export const AdminNav = () => {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:static md:border-0 md:bg-transparent md:pb-0 md:backdrop-blur-none">
       <ul className="grid grid-cols-5 md:flex md:gap-1">
-        {ITEMS.map(({ href, label, icon: Icon }) => {
-          // New-booking form lives under /turnos but belongs to the Agenda tab
-          const active = href === "/" ? pathname === "/" || pathname.startsWith("/turnos") : pathname.startsWith(href);
+        {[...PRIMARY_NAV, MORE_ITEM].map(({ href, label, icon: Icon }) => {
+          const active = isActive(href, pathname);
           return (
             <li key={href}>
               <Link

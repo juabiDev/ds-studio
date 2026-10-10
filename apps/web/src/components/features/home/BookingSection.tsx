@@ -15,7 +15,7 @@ export const BookingSection = ({ services, barbers, whatsappUrl }: BookingSectio
   return (
     <section id="agendar" className="py-20 md:py-24 bg-background scroll-mt-16">
       <div className="max-w-4xl mx-auto px-6">
-        <SectionHeading eyebrow="En menos de 1 minuto" title="Reservá tu turno" />
+        <SectionHeading eyebrow="En menos de 1 minuto" title="Reserva tu turno" />
         <BookingWizard
           services={services}
           barbers={barbers}

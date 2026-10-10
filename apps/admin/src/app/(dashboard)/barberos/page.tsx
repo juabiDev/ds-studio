@@ -8,13 +8,14 @@ import { type BarberWithSlotCounts, getBarbersWithSlotCounts } from "@/lib/data/
 export const metadata: Metadata = { title: "Barberos" };
 export const dynamic = "force-dynamic";
 
-const scheduleHref = (employeeId: string) => `/horarios?barbero=${employeeId}`;
+// Profile + photo; the edit page links on to the barber's schedule
+const editHref = (employeeId: string) => `/barberos/${employeeId}`;
 
 const BarberCards = ({ barbers }: { barbers: BarberWithSlotCounts[] }) => (
   <ul className="flex flex-col gap-3 md:hidden">
     {barbers.map((e) => (
       <li key={e.id}>
-        <Link href={scheduleHref(e.id)} className="block rounded-lg border border-border bg-card p-4 hover:bg-secondary">
+        <Link href={editHref(e.id)} className="block rounded-lg border border-border bg-card p-4 hover:bg-secondary">
           <p className="font-medium">{e.name}</p>
           <p className="text-sm text-muted-foreground">
             {e.role}
@@ -46,7 +47,7 @@ const BarberTable = ({ barbers }: { barbers: BarberWithSlotCounts[] }) => (
         {barbers.map((e) => (
           <TableRow key={e.id}>
             <TableCell>
-              <Link href={scheduleHref(e.id)} className="underline-offset-4 hover:underline">
+              <Link href={editHref(e.id)} className="underline-offset-4 hover:underline">
                 {e.name}
               </Link>
             </TableCell>
@@ -70,7 +71,10 @@ export default async function BarbersPage() {
 
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">Barberos</h1>
+      <div>
+        <h1 className="text-xl font-semibold">Barberos</h1>
+        <p className="text-sm text-muted-foreground">Toca un barbero para editar su foto y sus datos del sitio.</p>
+      </div>
       {/* Cards on mobile, table on desktop */}
       <BarberCards barbers={barbers} />
       <BarberTable barbers={barbers} />

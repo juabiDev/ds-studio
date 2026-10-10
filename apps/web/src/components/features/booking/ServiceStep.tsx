@@ -12,7 +12,7 @@ interface ServiceStepProps {
 
 export const ServiceStep = ({ services, selectedId, onSelect }: ServiceStepProps) => (
   <div>
-    <p className={sectionLabel}>Elegí un servicio</p>
+    <p className={sectionLabel}>Elige un servicio</p>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {services.map((s) => (
         <button key={s.id} onClick={() => onSelect(s.id)} className={`text-left p-5 ${optionClass(selectedId === s.id)}`}>

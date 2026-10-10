@@ -15,13 +15,13 @@ export const bookingSchema = z.object({
   employeeId: id.nullable(),
   date: dateKey,
   time,
-  name: z.string().trim().min(2, "Ingresá tu nombre").max(80),
+  name: z.string().trim().min(2, "Ingresa tu nombre").max(80),
   // Uruguayan mobiles are 09x xxx xxx; accept +598, spaces and dashes
   phone: z
     .string()
     .trim()
-    .regex(/^\+?[\d\s-]{8,20}$/, "Ingresá un teléfono válido"),
-  email: z.string().trim().toLowerCase().max(254).pipe(z.email("Ingresá un email válido")),
+    .regex(/^\+?[\d\s-]{8,20}$/, "Ingresa un teléfono válido"),
+  email: z.string().trim().toLowerCase().max(254).pipe(z.email("Ingresa un email válido")),
   /** Honeypot: hidden from people, so it must stay empty */
   website: z.string().max(200).optional(),
   turnstileToken: z.string().max(2048).optional(),

@@ -6,6 +6,8 @@ export interface ServiceOption {
   durationMinutes: number;
   /** Pre-formatted, e.g. "$350"; null when the price isn't published */
   price: string | null;
+  /** Price in UYU for structured data; null when not published */
+  priceAmount: number | null;
 }
 
 export interface BarberOption {

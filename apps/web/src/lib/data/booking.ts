@@ -16,6 +16,7 @@ export const getServiceOptions = async (): Promise<ServiceOption[]> => {
     name: s.name,
     durationMinutes: s.duration ?? DEFAULT_DURATION_MINUTES,
     price: s.price ? `$${s.price.toFixed(0)}` : null,
+    priceAmount: s.price ? s.price.toNumber() : null,
   }));
 };
 

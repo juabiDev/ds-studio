@@ -83,7 +83,7 @@ interface TimePickerProps {
 
 const TimePicker = ({ times, timesError, selected, anyBarber, onSelect }: TimePickerProps) => {
   if (timesError) {
-    return <p className="font-body text-white/70 text-sm">No pudimos cargar los horarios. Probá de nuevo en un momento.</p>;
+    return <p className="font-body text-white/70 text-sm">No pudimos cargar los horarios. Prueba de nuevo en un momento.</p>;
   }
 
   if (times === null) {
@@ -99,7 +99,7 @@ const TimePicker = ({ times, timesError, selected, anyBarber, onSelect }: TimePi
   if (times.length === 0) {
     return (
       <p className="font-body text-white/70 text-sm">
-        No quedan horarios para este día{!anyBarber ? " con este barbero" : ""}. Probá otra fecha.
+        No quedan horarios para este día{!anyBarber ? " con este barbero" : ""}. Prueba otra fecha.
       </p>
     );
   }
@@ -155,13 +155,13 @@ export const ScheduleStep = ({
   onContinue,
 }: ScheduleStepProps) => (
   <div>
-    <p className={sectionLabel}>Elegí tu barbero</p>
+    <p className={sectionLabel}>Elige tu barbero</p>
     <BarberPicker barbers={barbers} selected={barberChoice} onSelect={onBarberChange} />
 
-    <p className={sectionLabel}>Elegí la fecha</p>
+    <p className={sectionLabel}>Elige la fecha</p>
     <DatePicker dateKeys={dateKeys} selected={dateKey} onSelect={onDateChange} />
 
-    <p className={sectionLabel}>Elegí el horario</p>
+    <p className={sectionLabel}>Elige el horario</p>
     {slotNotice && (
       <p role="alert" className="mb-4 border border-amber-400/40 bg-amber-400/10 px-4 py-3 font-body text-sm text-amber-200">
         {slotNotice}

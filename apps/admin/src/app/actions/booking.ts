@@ -75,7 +75,7 @@ export const createAdminBooking = async (input: {
         error:
           result.reason === "SERVICE_NOT_FOUND"
             ? "Ese servicio ya no existe."
-            : "Ese horario ya no está libre. Elegí otro.",
+            : "Ese horario ya no está libre. Elige otro.",
       };
     }
 

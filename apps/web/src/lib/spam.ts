@@ -4,17 +4,14 @@ import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 
 import { prisma } from "@ds-studio/database";
+import { getClientIpFromHeaders } from "@ds-studio/database/client-ip";
 
 /** Successful online bookings allowed per IP per hour; real customers book once. */
 const MAX_BOOKINGS_PER_IP_PER_HOUR = 3;
 
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-const getClientIp = async () => {
-  const h = await headers();
-  // First hop is the client when behind Vercel/Railway/Cloudflare proxies
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
-};
+export const getClientIp = async () => getClientIpFromHeaders(await headers());
 
 /** Salted hash so raw IPs are never stored. */
 const hashIp = (ip: string) =>
@@ -40,12 +37,17 @@ export const isIpRateLimited = async (ipHash: string | null) => {
   return recent >= MAX_BOOKINGS_PER_IP_PER_HOUR;
 };
 
-export const isTurnstileEnabled = () => !!process.env.TURNSTILE_SECRET_KEY;
-
-/** Cloudflare Turnstile bot check. Skipped (passes) until TURNSTILE_SECRET_KEY is configured. */
+/**
+ * Cloudflare Turnstile bot check. Skipped (passes) until TURNSTILE_SECRET_KEY is set, so a missing
+ * key never takes online booking down; the honeypot and the per-IP limit still apply. Production
+ * logs an error on every booking so the gap gets noticed.
+ */
 export const verifyTurnstile = async (token: string | undefined, ip: string | null) => {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") console.error("[turnstile] TURNSTILE_SECRET_KEY is not set; bot check skipped");
+    return true;
+  }
   if (!token) return false;
 
   try {

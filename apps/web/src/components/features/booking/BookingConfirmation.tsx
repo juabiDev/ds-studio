@@ -33,7 +33,7 @@ export const BookingConfirmation = ({ booking, email, whatsappUrl, onReset }: Bo
       {booking.date !== toShopDateKey() && " y el día del turno te mandamos un recordatorio"}.
     </p>
     <p className="font-body text-white/65 text-sm mt-3 max-w-xs mx-auto">
-      ¿Necesitás cancelarlo? Usá el botón del email. Para cambiar el horario, escribinos por WhatsApp.
+      ¿Necesitas cancelarlo? Usa el botón del email. Para cambiar el horario, escríbenos por WhatsApp.
     </p>
     <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
       <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={primaryButton}>

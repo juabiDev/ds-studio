@@ -22,12 +22,26 @@ const optionalHttpsUrl = z
   .union([z.literal(""), z.url({ protocol: /^https$/, error: "Tiene que ser un link https://" })])
   .transform((v) => v || null);
 
+/** Trimmed text where an empty input means "not set" (null). */
+export const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => v || null);
+
 export const siteSettingsSchema = z.object({
   phone,
   whatsapp: z.union([z.literal(""), phone]).transform((v) => v || null),
   email: z.email("Email inválido"),
-  street: z.string().trim().min(3, "Ingresá la dirección").max(120),
-  city: z.string().trim().min(2, "Ingresá la ciudad").max(60),
+  street: z.string().trim().min(3, "Ingresa la dirección").max(120),
+  neighborhood: optionalText(60),
+  postalCode: z
+    .string()
+    .trim()
+    .regex(/^(\d{5})?$/, "El código postal son 5 números")
+    .transform((v) => v || null),
+  city: z.string().trim().min(2, "Ingresa la ciudad").max(60),
   latitude: z.number({ error: "Coordenadas inválidas" }).min(-90, "Coordenadas inválidas").max(90, "Coordenadas inválidas"),
   longitude: z.number({ error: "Coordenadas inválidas" }).min(-180, "Coordenadas inválidas").max(180, "Coordenadas inválidas"),
   instagramUrl: optionalHttpsUrl,
@@ -38,17 +52,20 @@ export const siteSettingsSchema = z.object({
 export type OpeningHoursByDay = z.infer<typeof openingHoursSchema>;
 export type SiteSettingsData = z.output<typeof siteSettingsSchema>;
 
-const WEEKDAY = { opens: "09:00", closes: "20:00" };
+// Matches the weekly slots the seed creates (prisma/seed.ts): last turn starts 30 min before closing
+const WEEKDAY = { opens: "10:00", closes: "20:00" };
 
 /** Used until the first save from the admin (and by the seed). */
 export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
   phone: "+598 99 123 456",
   whatsapp: null,
   email: "dsstudio@gmail.com",
-  street: "Av. 18 de Julio 1234",
+  street: "Colonia 1812 esq. Tristán Narvaja",
+  neighborhood: "Centro",
+  postalCode: "11200",
   city: "Montevideo",
-  latitude: -34.906,
-  longitude: -56.178,
+  latitude: -34.90147,
+  longitude: -56.17758,
   instagramUrl: null,
   facebookUrl: null,
   openingHours: {
@@ -57,7 +74,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
     WEDNESDAY: WEEKDAY,
     THURSDAY: WEEKDAY,
     FRIDAY: WEEKDAY,
-    SATURDAY: WEEKDAY,
-    SUNDAY: { opens: "10:00", closes: "15:00" },
+    SATURDAY: { opens: "09:00", closes: "14:00" },
+    SUNDAY: { opens: "10:00", closes: "14:00" },
   },
 };

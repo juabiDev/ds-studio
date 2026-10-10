@@ -14,13 +14,13 @@ import { bookingSchema } from "@/lib/validation/booking";
 import type { BookingInput, BookingResult } from "@/types/booking";
 
 const ERRORS = {
-  SLOT_TAKEN: "Ese horario se acaba de ocupar. Elegí otro, por favor.",
-  PHONE_LIMIT: "Ya tenés 2 turnos reservados. Si necesitás otro, escribinos por WhatsApp.",
-  DUPLICATE: "Ya tenés un turno reservado ese día. Si querés cambiarlo, escribinos por WhatsApp.",
+  SLOT_TAKEN: "Ese horario se acaba de ocupar. Elige otro, por favor.",
+  PHONE_LIMIT: "Ya tienes 2 turnos reservados. Si necesitas otro, escríbenos por WhatsApp.",
+  DUPLICATE: "Ya tienes un turno reservado ese día. Si quieres cambiarlo, escríbenos por WhatsApp.",
   SERVICE_NOT_FOUND: "Ese servicio ya no está disponible.",
-  RATE_LIMITED: "Recibimos muchas reservas desde tu conexión. Escribinos por WhatsApp y te ayudamos.",
-  BOT_CHECK: "No pudimos verificar que no seas un robot. Recargá la página y probá de nuevo.",
-  GENERIC: "No pudimos guardar tu reserva. Probá de nuevo o escribinos por WhatsApp.",
+  RATE_LIMITED: "Recibimos muchas reservas desde tu conexión. Escríbenos por WhatsApp y te ayudamos.",
+  BOT_CHECK: "No pudimos verificar que no seas un robot. Recarga la página y prueba de nuevo.",
+  GENERIC: "No pudimos guardar tu reserva. Prueba de nuevo o escríbenos por WhatsApp.",
 } as const;
 
 export const createBooking = async (input: BookingInput): Promise<BookingResult> => {

@@ -34,5 +34,16 @@ export const getWhatsAppConfig = (): WhatsAppConfig | null => {
   };
 };
 
-/** Where customers can book again; used in replies and templates. */
-export const getPublicSiteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://dsstudio.example.com";
+/**
+ * Where customers can book again; used in replies, templates and cancel links. Null when unset in
+ * production (logged): messages still go out, just without site links or a cancel button, rather
+ * than with links to a wrong domain. The admin app also sends messages, so its own Railway domain
+ * is not a usable fallback here.
+ */
+export const getPublicSiteUrl = (): string | null => {
+  const url = process.env.NEXT_PUBLIC_SITE_URL;
+  if (url) return url;
+  if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
+  console.error("[messaging] NEXT_PUBLIC_SITE_URL is not set; sending without site links");
+  return null;
+};

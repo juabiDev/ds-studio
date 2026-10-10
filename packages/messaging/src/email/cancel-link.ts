@@ -27,13 +27,15 @@ const sign = (secret: string, appointmentId: string) =>
 
 /**
  * The link is the appointment id plus an HMAC of it, so every email (confirmation now, reminder
- * later) can carry the same link without storing a token. Null when BOOKING_LINK_SECRET is unset.
+ * later) can carry the same link without storing a token. Null when BOOKING_LINK_SECRET or the
+ * public site URL is unset.
  */
 export const buildCancelUrl = (appointmentId: string) => {
   const secret = getLinkSecret();
-  if (!secret) return null;
+  const siteUrl = getPublicSiteUrl();
+  if (!secret || !siteUrl) return null;
 
-  const url = new URL(`/cancelar-turno/${appointmentId}`, getPublicSiteUrl());
+  const url = new URL(`/cancelar-turno/${appointmentId}`, siteUrl);
   url.searchParams.set("t", sign(secret, appointmentId));
   return url.toString();
 };

@@ -17,6 +17,8 @@ export const getSiteSettings = async (): Promise<SiteSettingsData> => {
     whatsapp: row.whatsapp,
     email: row.email,
     street: row.street,
+    neighborhood: row.neighborhood,
+    postalCode: row.postalCode,
     city: row.city,
     latitude: row.latitude,
     longitude: row.longitude,

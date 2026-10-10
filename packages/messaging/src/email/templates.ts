@@ -14,7 +14,8 @@ export interface AppointmentEmailData {
     phone: string;
     whatsappUrl: string;
     mapsUrl: string;
-    siteUrl: string;
+    /** Null when the public site URL isn't configured; site links are left out */
+    siteUrl: string | null;
   };
 }
 
@@ -102,8 +103,8 @@ const layout = ({ preheader, heading, intro, data, closing, actions, cancelUrl }
           </tr>
           <tr>
             <td align="center" style="${FONT}padding:20px 24px;border-top:1px solid #e5e5e5;color:#a3a3a3;font-size:12px;line-height:1.6;">
-              DS Studio · ${escapeHtml(data.shop.address)} · ${escapeHtml(data.shop.phone)}<br />
-              <a href="${escapeHtml(data.shop.siteUrl)}" style="color:#a3a3a3;">${escapeHtml(data.shop.siteUrl.replace(/^https?:\/\//, ""))}</a>
+              DS Studio · ${escapeHtml(data.shop.address)} · ${escapeHtml(data.shop.phone)}
+              ${data.shop.siteUrl ? `<br /><a href="${escapeHtml(data.shop.siteUrl)}" style="color:#a3a3a3;">${escapeHtml(data.shop.siteUrl.replace(/^https?:\/\//, ""))}</a>` : ""}
             </td>
           </tr>
         </table>
@@ -122,7 +123,7 @@ const textDetails = (data: AppointmentEmailData) =>
     `Dirección: ${data.shop.address}`,
   ].join("\n");
 
-const footerText = (data: AppointmentEmailData) => `DS Studio · ${data.shop.siteUrl}`;
+const footerText = (data: AppointmentEmailData) => ["DS Studio", data.shop.siteUrl].filter(Boolean).join(" · ");
 
 const visitActions = (data: AppointmentEmailData): EmailAction[] => [
   { href: data.shop.mapsUrl, label: "Cómo llegar" },
@@ -198,7 +199,7 @@ export const appointmentReminderEmail = (data: AppointmentEmailData, cancel: Can
 
 /** Sent when staff cancel the appointment from the admin. */
 export const staffCancellationEmail = (data: AppointmentEmailData): RenderedEmail => {
-  const bookUrl = `${data.shop.siteUrl.replace(/\/$/, "")}/#agendar`;
+  const bookUrl = data.shop.siteUrl ? `${data.shop.siteUrl.replace(/\/$/, "")}/#agendar` : null;
   const apology =
     "Disculpa las molestias. Puedes reservar un nuevo horario en nuestra web o escribirnos por WhatsApp y te ayudamos.";
 
@@ -211,7 +212,7 @@ export const staffCancellationEmail = (data: AppointmentEmailData): RenderedEmai
       data,
       closing: escapeHtml(apology),
       actions: [
-        { href: bookUrl, label: "Reservar otro turno" },
+        ...(bookUrl ? [{ href: bookUrl, label: "Reservar otro turno" }] : []),
         { href: data.shop.whatsappUrl, label: "WhatsApp" },
       ],
     }),

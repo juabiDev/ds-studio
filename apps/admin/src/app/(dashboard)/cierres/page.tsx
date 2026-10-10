@@ -27,7 +27,7 @@ const ClosureItem = ({ closure: c }: { closure: UpcomingClosure }) => (
       {c.reason && <p className="text-sm text-muted-foreground">{c.reason}</p>}
       {c.affected > 0 && (
         <p className="mt-1 text-sm text-amber-300">
-          {c.affected} {c.affected === 1 ? "turno ya reservado" : "turnos ya reservados"} en estas fechas — revisalos en la Agenda.
+          {c.affected} {c.affected === 1 ? "turno ya reservado" : "turnos ya reservados"} en estas fechas — revísalos en la Agenda.
         </p>
       )}
     </div>

@@ -19,7 +19,7 @@ Hola {{nombre}}, tu turno en DS STUDIO quedó reservado:
 ✂️ {{servicio}} con {{barbero}}
 📅 {{fecha}} a las {{hora}} hs
 
-¿Nos confirmás que venís?
+¿Nos confirmas que vienes?
 ```
 
 **Buttons** (Quick reply, in this order)
@@ -39,7 +39,7 @@ Sent when staff cancel an appointment from the admin.
 ```
 Hola {{nombre}}, lamentamos avisarte que tu turno de {{servicio}} del {{fecha}} a las {{hora}} hs fue cancelado por el local.
 
-Podés reservar un nuevo horario en {{sitio}} o respondiendo este mensaje.
+Puedes reservar un nuevo horario en {{sitio}} o respondiendo este mensaje.
 ```
 
 No buttons. Sample values: nombre `Juan`, servicio `Corte Clásico`, fecha `martes 29 de septiembre`,

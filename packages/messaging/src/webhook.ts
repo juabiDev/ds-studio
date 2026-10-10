@@ -183,6 +183,7 @@ const processButtonTap = async (
   const name = firstName(appointment.customerName);
   const when = `${formatLongDate(dateKey)} a las ${appointment.time} hs`;
   const site = getPublicSiteUrl();
+  const bookAgain = site ? `Si quieres reservar otro horario: ${site}` : "Si quieres reservar otro horario, responde este mensaje.";
 
   const reply = async (text: string) => {
     const result = await sendText(config, senderPhone, text);
@@ -200,11 +201,11 @@ const processButtonTap = async (
   };
 
   if (appointment.status === "CANCELLED") {
-    await reply(`Ese turno ya estaba cancelado. Si querés reservar otro horario: ${site}`);
+    await reply(`Ese turno ya estaba cancelado. ${bookAgain}`);
     return null;
   }
   if (appointment.status !== "CONFIRMED" || isPast) {
-    await reply(`Ese turno ya pasó. Si querés reservar otro horario: ${site}`);
+    await reply(`Ese turno ya pasó. ${bookAgain}`);
     return null;
   }
 
@@ -212,7 +213,7 @@ const processButtonTap = async (
     if (!appointment.customerConfirmedAt) {
       await prisma.appointment.update({ where: { id: appointment.id }, data: { customerConfirmedAt: new Date() } });
     }
-    await reply(`¡Gracias, ${name}! Te esperamos el ${when}. Si no podés venir, tocá "Cancelar turno" en el mensaje anterior.`);
+    await reply(`¡Gracias, ${name}! Te esperamos el ${when}. Si no puedes venir, toca "Cancelar turno" en el mensaje anterior.`);
     return null;
   }
 
@@ -223,7 +224,7 @@ const processButtonTap = async (
   });
   if (count === 0) return null;
 
-  await reply(`Listo, ${name}. Cancelamos tu turno de ${appointment.service.name} del ${when}. Si querés reservar otro horario: ${site}`);
+  await reply(`Listo, ${name}. Cancelamos tu turno de ${appointment.service.name} del ${when}. ${bookAgain}`);
 
   return {
     appointmentId: appointment.id,

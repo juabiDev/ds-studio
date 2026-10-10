@@ -60,7 +60,7 @@ export const LocationSection = ({ business }: { business: BusinessInfo }) => (
           <ContactItem icon={MapPin} label="Dirección">
             <p className="font-body text-foreground">{business.address.street}</p>
             <p className="font-body text-white/65 text-sm">
-              {business.address.city}, {business.address.countryName}
+              {[business.address.neighborhood, business.address.city, business.address.countryName].filter(Boolean).join(", ")}
             </p>
             <a href={business.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionLink}>
               <Navigation size={13} /> Cómo llegar

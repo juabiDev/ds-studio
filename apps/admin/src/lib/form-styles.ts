@@ -3,3 +3,4 @@ export const fieldClass = "h-12 w-full rounded-md border border-border bg-input 
 export const labelClass = "mb-1.5 block text-sm text-muted-foreground";
 export const hintClass = "mt-1 text-xs text-muted-foreground";
 export const submitClass = "h-12 rounded-md bg-primary text-base font-medium text-primary-foreground disabled:opacity-40";
+export const textareaClass = "min-h-28 w-full rounded-md border border-border bg-input px-3 py-2.5 text-base";

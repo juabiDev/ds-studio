@@ -257,6 +257,9 @@ model SiteSettings {
   whatsapp     String?
   email        String
   street       String
+  /// Barrio, e.g. "Pocitos"; shown on the site and used for local SEO
+  neighborhood String?
+  postalCode   String?  @map("postal_code")
   city         String
   latitude     Float
   longitude    Float
@@ -264,10 +267,26 @@ model SiteSettings {
   facebookUrl  String?  @map("facebook_url")
   /// { "MONDAY": { "opens": "09:00", "closes": "20:00" }, ..., "SUNDAY": null }; null = closed
   openingHours Json     @map("opening_hours")
+  /// Shows the FAQ section on the public site; toggled from the admin "Preguntas" page
+  showFaq      Boolean  @default(true) @map("show_faq")
   updatedAt    DateTime @updatedAt @map("updated_at")
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("site_settings")
+}
+
+/// A question in the public site's FAQ, edited from the admin "Preguntas" page.
+model FaqItem {
+  id        String    @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int       @default(0) @map("sort_order")
+  deletedAt DateTime? @map("deleted_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([sortOrder])
+  @@map("faq_items")
 }
 
 /// A booked slot. `date` + `time` use the same local-time convention as Availability

@@ -15,7 +15,14 @@ export interface BusinessInfo {
   phone: { display: string; href: string; e164: string };
   email: string;
   whatsappUrl: string;
-  address: { street: string; city: string; countryName: string; country: string };
+  address: {
+    street: string;
+    neighborhood: string | null;
+    postalCode: string | null;
+    city: string;
+    countryName: string;
+    country: string;
+  };
   geo: { latitude: number; longitude: number };
   mapsUrl: string;
   mapEmbedUrl: string;
@@ -23,6 +30,12 @@ export interface BusinessInfo {
   facebookUrl: string | null;
   hoursByDay: OpeningHoursByDay;
   hours: OpeningHoursGroup[];
+}
+
+export interface FaqEntry {
+  id: string;
+  question: string;
+  answer: string;
 }
 
 export interface GalleryPhoto {

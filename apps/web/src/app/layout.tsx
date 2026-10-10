@@ -1,29 +1,48 @@
 import type { Metadata, Viewport } from "next";
 
+import { getBusinessInfo } from "@/lib/data/business";
 import { fontVariables } from "@/lib/fonts";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site-config";
+import { localKeyword, SITE_DESCRIPTION, SITE_INDEXABLE, SITE_NAME, SITE_URL } from "@/lib/site-config";
 
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: `${SITE_NAME} — Barbería en Montevideo, Uruguay`,
-    template: `%s — ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
-  robots: {
-    index: false,
-    follow: false,
-  },
-  openGraph: {
-    title: `${SITE_NAME} — Barbería en Montevideo, Uruguay`,
-    description: SITE_DESCRIPTION,
-    url: SITE_URL,
-    siteName: SITE_NAME,
-    locale: "es_UY",
-    type: "website",
-  },
+/** Barrio and city from Ajustes; generic values when settings can't be read. */
+const loadPlace = async () => {
+  try {
+    const { neighborhood, city } = (await getBusinessInfo()).address;
+    return { neighborhood, city };
+  } catch (error) {
+    // Metadata must never take a page down; fall back to the generic "Barbería en Montevideo"
+    console.error("[metadata] settings unavailable", error);
+    return { neighborhood: null, city: "Montevideo" };
+  }
+};
+
+export const generateMetadata = async (): Promise<Metadata> => {
+  const { neighborhood, city } = await loadPlace();
+  // "DS STUDIO — Barbería en Centro, Montevideo": brand + the exact local search phrase
+  const title = `${SITE_NAME} — ${localKeyword(neighborhood, city)}`;
+  const description = neighborhood
+    ? `Barbería urbana de precisión en ${neighborhood}, ${city}. Cortes clásicos, fade, barba y reserva de turnos online.`
+    : SITE_DESCRIPTION;
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: title, template: `%s — ${SITE_NAME}` },
+    description,
+    // SITE_INDEXING=on in production once the real domain is live (robots.ts follows the same switch)
+    robots: { index: SITE_INDEXABLE, follow: SITE_INDEXABLE },
+    openGraph: {
+      title,
+      description,
+      siteName: SITE_NAME,
+      locale: "es_UY",
+      type: "website",
+    },
+    // Canonical and og:url are set per page (home in page.tsx), so other routes never claim to be the home.
+    // The image is app/opengraph-image.jpg (kept under ~300 KB: WhatsApp drops larger previews)
+    twitter: { card: "summary_large_image" },
+  };
 };
 
 export const viewport: Viewport = {

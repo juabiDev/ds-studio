@@ -102,7 +102,8 @@ export const sendStaffCancellationNotice = async (appointmentId: string) => {
         servicio: templateParam(appointment.service.name),
         fecha: formatLongDate(dbDateToKey(appointment.date)),
         hora: appointment.time,
-        sitio: getPublicSiteUrl(),
+        // The template reads "Puedes reservar un nuevo horario en {{sitio}} o respondiendo este mensaje."
+        sitio: getPublicSiteUrl() ?? "nuestra web",
       },
     });
 

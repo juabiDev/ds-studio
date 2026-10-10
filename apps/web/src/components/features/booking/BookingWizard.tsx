@@ -86,7 +86,7 @@ export const BookingWizard = ({ services, barbers, whatsappUrl, turnstileSiteKey
 
       setTime(null);
       setStep(2);
-      setSlotNotice(`Las ${time} se acaban de ocupar. Elegí otro horario.`);
+      setSlotNotice(`Las ${time} se acaban de ocupar. Elige otro horario.`);
       return false;
     } catch {
       // The check itself failed (e.g. flaky connection): let the server-side check decide

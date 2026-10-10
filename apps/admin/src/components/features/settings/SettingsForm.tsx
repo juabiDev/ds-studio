@@ -36,6 +36,21 @@ const ContactSection = ({ settings }: { settings: SiteSettingsData }) => (
 const LocationSection = ({ settings }: { settings: SiteSettingsData }) => (
   <Section title="Ubicación">
     <TextField id="street" label="Dirección" defaultValue={settings.street} required />
+    <TextField
+      id="neighborhood"
+      label="Barrio (opcional)"
+      defaultValue={settings.neighborhood ?? ""}
+      placeholder="Pocitos"
+      hint="Aparece en el sitio y ayuda a que te encuentren en Google (ej. «barbería en Pocitos»)."
+    />
+    <TextField
+      id="postalCode"
+      label="Código postal (opcional)"
+      defaultValue={settings.postalCode ?? ""}
+      inputMode="numeric"
+      maxLength={5}
+      placeholder="11300"
+    />
     <TextField id="city" label="Ciudad" defaultValue={settings.city} required />
     <TextField
       id="coordinates"
@@ -43,7 +58,7 @@ const LocationSection = ({ settings }: { settings: SiteSettingsData }) => (
       defaultValue={`${settings.latitude}, ${settings.longitude}`}
       required
       inputMode="decimal"
-      hint="En Google Maps, mantené presionado sobre el local (en computadora, clic derecho) y copiá los números (ej. -34.906, -56.178)."
+      hint="En Google Maps, mantén presionado sobre el local (en computadora, clic derecho) y copia los números (ej. -34.906, -56.178)."
     />
   </Section>
 );
@@ -63,7 +78,7 @@ const SocialSection = ({ settings }: { settings: SiteSettingsData }) => (
       type="url"
       placeholder="https://facebook.com/pagina"
       defaultValue={settings.facebookUrl ?? ""}
-      hint="Dejá vacío para ocultar el link en el sitio."
+      hint="Deja vacío para ocultar el link en el sitio."
     />
   </Section>
 );
@@ -101,7 +116,7 @@ const OpeningHoursSection = ({ settings }: { settings: SiteSettingsData }) => (
         );
       })}
     </ul>
-    <p className={hintClass}>Destildá el día si el local cierra.</p>
+    <p className={hintClass}>Desmarca el día si el local cierra.</p>
   </Section>
 );
 

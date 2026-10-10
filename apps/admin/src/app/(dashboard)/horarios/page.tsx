@@ -131,8 +131,8 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         {isShop ? "Todo el local" : barber.name} · {dayLabel}: {openCount} de {slots.length} horarios abiertos.{" "}
         {isShop
           ? "Cerrar un horario acá lo cierra para todos los barberos."
-          : "Tocá un horario para bloquearlo o habilitarlo."}{" "}
-        Para feriados o vacaciones usá Cierres.
+          : "Toca un horario para bloquearlo o habilitarlo."}{" "}
+        Para feriados o vacaciones usa Cierres.
       </p>
 
       {!isShop && <DayToggle employeeId={barber.id} day={day} dayLabel={dayLabel} />}

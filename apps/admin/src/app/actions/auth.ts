@@ -9,6 +9,7 @@ import { z } from "zod";
 import { isLoginRateLimited } from "@ds-studio/auth/login-rate-limit";
 import { auth } from "@ds-studio/auth/server";
 import { prisma } from "@ds-studio/database";
+import { getClientIpFromHeaders } from "@ds-studio/database/client-ip";
 
 const signInSchema = z.object({
   email: z.email().transform((email) => email.toLowerCase()),
@@ -18,14 +19,14 @@ const signInSchema = z.object({
 export type SignInResult = { error: string } | undefined;
 
 const INVALID_CREDENTIALS = "Email o contraseña incorrectos.";
-const TOO_MANY_ATTEMPTS = "Demasiados intentos. Esperá un minuto.";
+const TOO_MANY_ATTEMPTS = "Demasiados intentos. Espera un minuto.";
 
 export const signIn = async (formData: FormData): Promise<SignInResult> => {
   const parsed = signInSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Ingresá un email y contraseña válidos." };
+  if (!parsed.success) return { error: "Ingresa un email y una contraseña válidos." };
 
   const requestHeaders = await headers();
-  const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIpFromHeaders(requestHeaders) ?? "unknown";
   // Limits password guessing both per connection and per targeted account
   if (isLoginRateLimited([`ip:${ip}`, `email:${parsed.data.email}`])) return { error: TOO_MANY_ATTEMPTS };
 
@@ -45,7 +46,7 @@ export const signIn = async (formData: FormData): Promise<SignInResult> => {
       return { error: error.status === "TOO_MANY_REQUESTS" ? TOO_MANY_ATTEMPTS : INVALID_CREDENTIALS };
     }
     console.error("[signIn]", error);
-    return { error: "No se pudo iniciar sesión. Probá de nuevo." };
+    return { error: "No se pudo iniciar sesión. Prueba de nuevo." };
   }
 
   redirect("/");

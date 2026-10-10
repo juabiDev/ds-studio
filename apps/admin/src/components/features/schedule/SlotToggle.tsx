@@ -58,7 +58,7 @@ export const SlotToggle = ({ scope, availabilityId, time, available, shopClosed 
     >
       <span className={cn("text-lg font-semibold tabular-nums", !open && "text-muted-foreground line-through")}>{time}</span>
       <span className="flex items-center gap-3 text-sm">
-        {failed && <span className="text-red-300">Error, reintentá</span>}
+        {failed && <span className="text-red-300">Error, reintenta</span>}
         {locked ? (
           <span className="text-muted-foreground">Cerrado (local)</span>
         ) : (

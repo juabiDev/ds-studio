@@ -1,4 +1,4 @@
-import type { DayOfWeek } from "@ds-studio/database";
+import type { AppointmentStatus, DayOfWeek } from "@ds-studio/database";
 import { normalizePhone } from "@ds-studio/database/phone";
 import { dateKeyToDbDate } from "@ds-studio/database/dates";
 
@@ -23,3 +23,11 @@ export const formatDateKey = (key: string) => {
 
 /** wa.me wants the international number without "+"; phones are stored normalized (E.164). */
 export const whatsappLink = (phone: string) => `https://wa.me/${normalizePhone(phone).replace("+", "")}`;
+
+/** Status badge text and colors, shared by the agenda and the customer history. */
+export const STATUS_LABEL: Record<AppointmentStatus, { label: string; className: string }> = {
+  CONFIRMED: { label: "Confirmado", className: "bg-emerald-500/15 text-emerald-300" },
+  COMPLETED: { label: "Completado", className: "bg-secondary text-muted-foreground" },
+  NO_SHOW: { label: "No vino", className: "bg-amber-500/15 text-amber-300" },
+  CANCELLED: { label: "Cancelado", className: "bg-destructive/15 text-red-300" },
+};

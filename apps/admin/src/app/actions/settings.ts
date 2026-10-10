@@ -25,6 +25,8 @@ export const updateSiteSettings = async (formData: FormData): Promise<ActionResu
     whatsapp: text("whatsapp"),
     email: text("email"),
     street: text("street"),
+    neighborhood: text("neighborhood"),
+    postalCode: text("postalCode"),
     city: text("city"),
     ...parseCoordinates(text("coordinates")),
     instagramUrl: text("instagramUrl").trim(),

@@ -41,19 +41,19 @@ const lookUp = async (id: string, t: string | undefined): Promise<CancelLinkLook
 const MESSAGES = {
   invalid: {
     title: "Link inválido",
-    body: "Este link para cancelar no es válido. Si necesitás cancelar tu turno, escribinos por WhatsApp.",
+    body: "Este link para cancelar no es válido. Si necesitas cancelar tu turno, escríbenos por WhatsApp.",
   },
   cancelled: {
     title: "Turno cancelado",
-    body: "Tu turno está cancelado. ¡Gracias por avisarnos! Cuando quieras, podés reservar un nuevo horario.",
+    body: "Tu turno está cancelado. ¡Gracias por avisarnos! Cuando quieras, puedes reservar un nuevo horario.",
   },
   too_late: {
     title: "Ya no se puede cancelar online",
-    body: `Los turnos se pueden cancelar desde acá hasta ${CUTOFF_HOURS} horas antes. Escribinos por WhatsApp y lo vemos.`,
+    body: `Los turnos se pueden cancelar desde acá hasta ${CUTOFF_HOURS} horas antes. Escríbenos por WhatsApp y lo vemos.`,
   },
   closed: {
     title: "Este turno ya pasó",
-    body: "Este turno ya no se puede cancelar. Si querés reservar otro horario, te esperamos.",
+    body: "Este turno ya no se puede cancelar. Si quieres reservar otro horario, te esperamos.",
   },
 } as const;
 
@@ -101,11 +101,11 @@ export default async function CancelBookingPage({ params, searchParams }: Cancel
                 ¿Cancelar tu turno, {lookup.appointment.firstName}?
               </h1>
               <p className="font-body text-white/65 text-sm max-w-xs mx-auto">
-                El horario queda libre para otra persona. Si solo querés cambiarlo, escribinos por WhatsApp.
+                El horario queda libre para otra persona. Si solo quieres cambiarlo, escríbenos por WhatsApp.
               </p>
               {error && (
                 <p role="alert" className="mt-4 font-body text-sm text-red-300">
-                  No pudimos cancelar el turno. Probá de nuevo o escribinos por WhatsApp.
+                  No pudimos cancelar el turno. Prueba de nuevo o escríbenos por WhatsApp.
                 </p>
               )}
               <form action={cancelBookingFromLink} className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">

@@ -93,7 +93,7 @@ export const AdminBookingForm = ({ services, barbers, initialDate, initialEmploy
       {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
 
       <button type="submit" disabled={!time || !name || saving} className={submitClass}>
-        {saving ? "Guardando…" : time ? `Agendar a las ${time}` : "Elegí un horario"}
+        {saving ? "Guardando…" : time ? `Agendar a las ${time}` : "Elige un horario"}
       </button>
     </form>
   );

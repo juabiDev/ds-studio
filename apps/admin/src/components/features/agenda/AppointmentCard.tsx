@@ -1,6 +1,6 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
-import type { AppointmentStatus, MessageStatus } from "@ds-studio/database";
+import type { MessageStatus } from "@ds-studio/database";
 import { cn } from "@ds-studio/ui/utils";
 
 import { AppointmentActions } from "@/components/features/agenda/AppointmentActions";
@@ -12,14 +12,7 @@ import {
   type AgendaAppointment,
   type AgendaMessageKind,
 } from "@/lib/data/agenda";
-import { whatsappLink } from "@/lib/format";
-
-const STATUS_LABEL: Record<AppointmentStatus, { label: string; className: string }> = {
-  CONFIRMED: { label: "Confirmado", className: "bg-emerald-500/15 text-emerald-300" },
-  COMPLETED: { label: "Completado", className: "bg-secondary text-muted-foreground" },
-  NO_SHOW: { label: "No vino", className: "bg-amber-500/15 text-amber-300" },
-  CANCELLED: { label: "Cancelado", className: "bg-destructive/15 text-red-300" },
-};
+import { STATUS_LABEL, whatsappLink } from "@/lib/format";
 
 type Note = { label: string; className: string };
 

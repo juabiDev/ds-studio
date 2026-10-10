@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSessionCookie } from "@ds-studio/auth/middleware";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/api/auth", "/robots.txt", "/icon", "/apple-icon", "/manifest.webmanifest"];
 
 // Fast cookie check before rendering. The session itself and the ADMIN role are verified by
 // requireAdmin() in the dashboard layout and in every server action.

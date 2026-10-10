@@ -47,7 +47,7 @@ export default async function NewBookingPage({ searchParams }: NewBookingPagePro
       <PageHeader backHref={`/?fecha=${initialDate}`} />
 
       {services.length === 0 || barbers.length === 0 ? (
-        <p className="text-muted-foreground">Primero cargá servicios y barberos.</p>
+        <p className="text-muted-foreground">Primero carga servicios y barberos.</p>
       ) : (
         <AdminBookingForm
           services={services}

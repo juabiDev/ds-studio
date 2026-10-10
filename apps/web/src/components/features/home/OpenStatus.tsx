@@ -21,7 +21,7 @@ export const OpenStatus = ({ hours }: { hours: OpeningHoursByDay }) => {
   return (
     <p className="inline-flex items-center gap-2 font-condensed text-xs tracking-[0.25em] uppercase text-white/80">
       <span className={`h-2 w-2 rounded-full ${status.open ? "bg-emerald-400" : "bg-white/40"}`} />
-      {status.open ? `Abierto ahora · cierra ${status.closes}` : "Cerrado ahora · reservá online"}
+      {status.open ? `Abierto ahora · cierra ${status.closes}` : "Cerrado ahora · reserva online"}
     </p>
   );
 };
